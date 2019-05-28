@@ -1,11 +1,22 @@
 package ch.caro62.experimental;
 
+import ch.caro62.model.Board;
+import ch.caro62.model.ModelSource;
+import com.j256.ormlite.dao.Dao;
+import io.reactivex.Flowable;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.schedulers.Schedulers;
+
 import javax.swing.*;
 import java.awt.*;
+import java.sql.SQLException;
+import java.util.List;
 
 public class JListApp extends JFrame {
 
-    public JListApp() {
+    private JPanel list;
+
+    public JListApp() throws SQLException {
         super("JListApp");
         init();
         setSize(600, 400);
@@ -14,26 +25,64 @@ public class JListApp extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     }
 
-    public static void main(String... args) {
+    public static void main(String... args) throws SQLException {
+        try {
+            //UIManager.setLookAndFeel(new NimbusLookAndFeel());
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch (UnsupportedLookAndFeelException | ClassNotFoundException | InstantiationException | IllegalAccessException e) {
+            try {
+                UIManager.setLookAndFeel(UIManager.getCrossPlatformLookAndFeelClassName());
+            } catch (UnsupportedLookAndFeelException | ClassNotFoundException | InstantiationException | IllegalAccessException ignored) {
+            }
+        }
         JListApp app = new JListApp();
     }
 
     private void init() {
-        JPanel list = new JPanel();
+        JToolBar toolbar = new JToolBar();
+        JButton reload = new JButton("reload");
+        reload.addActionListener((e) -> {
+            Disposable d = Flowable.fromCallable(this::load)
+                    .subscribeOn(Schedulers.io())
+                    //.observeOn(Schedulers.single())
+                    .subscribe();
+        });
+        toolbar.add(reload);
+        add(toolbar, BorderLayout.NORTH);
+
+        list = new JPanel();
         list.setLayout(new BoxLayout(list, BoxLayout.PAGE_AXIS));
-        for (int i = 0; i < 8; i++) {
+        JScrollPane scrollPane = new JScrollPane(list);
+        scrollPane.getVerticalScrollBar().setBlockIncrement(64);
+        scrollPane.getVerticalScrollBar().setUnitIncrement(32);
+        add(scrollPane, BorderLayout.CENTER);
+        Disposable d = Flowable.fromCallable(this::load)
+                .subscribeOn(Schedulers.io())
+                //.observeOn(Schedulers.single())
+                .subscribe();
+    }
+
+    private int load() throws SQLException {
+        //list.removeAll();
+        Dao<Board, String> boardDao = ModelSource.getBoardDAO();
+        List<Board> boards = boardDao.queryBuilder().orderByRaw("RANDOM()").limit((long) 32).query();
+        for (int i = 0; i < 32; i++) {
             JPanel inner = new JPanel();
+
             SpringLayout layout = new SpringLayout();
             inner.setLayout(layout);
-            JLabel title = new JLabel("title " + i);
-            title.setBorder(BorderFactory.createLineBorder(Color.RED));
-            JLabel user = new JLabel("user " + i);
-            user.setBorder(BorderFactory.createLineBorder(Color.RED));
+            System.out.println(boards.get(i).getTitle());
+            JLabel title = new JLabel(boards.get(i).getTitle());
+            JLabel user = new JLabel(boards.get(i).getRef());
+            user.setFont(user.getFont().deriveFont(11.0f));
             JButton del = new JButton("delete");
-            del.setBorder(BorderFactory.createLineBorder(Color.RED));
+            del.setFont(del.getFont().deriveFont(12.0f));
             inner.add(title);
             inner.add(user);
             inner.add(del);
+
+            inner.setMinimumSize(new Dimension(100, 50));
+            inner.setPreferredSize(new Dimension(100, title.getPreferredSize().height * 3));
 
             layout.putConstraint(SpringLayout.WEST, title,
                     5,
@@ -44,7 +93,7 @@ public class JListApp extends JFrame {
                     SpringLayout.WEST, inner);
 
             layout.putConstraint(SpringLayout.EAST, del,
-                    15,
+                    -5,
                     SpringLayout.EAST, inner);
 
             layout.putConstraint(SpringLayout.NORTH, title,
@@ -59,10 +108,10 @@ public class JListApp extends JFrame {
                     5,
                     SpringLayout.NORTH, inner);
 
-            list.add(inner);
+            SwingUtilities.invokeLater(() -> list.add(inner));
+            SwingUtilities.invokeLater(JListApp.this::revalidate);
         }
-        add(new JScrollPane(list));
-
+        return 0;
     }
 
 }

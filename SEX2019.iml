@@ -25,5 +25,6 @@
     <orderEntry type="library" name="com.squareup.okhttp3:okhttp:3.14.2" level="project" />
     <orderEntry type="library" name="io.reactivex.rxjava2:rxjava:2.1.0" level="project" />
     <orderEntry type="library" name="com.j256.ormlite:ormlite-jdbc:5.1" level="project" />
+    <orderEntry type="library" name="org.controlsfx:controlsfx:8.40.15" level="project" />
   </component>
 </module>
