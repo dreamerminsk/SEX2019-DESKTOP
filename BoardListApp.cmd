@@ -1,0 +1,1 @@
+java -cp SEX2019.jar ch.caro62.BoardListApp

@@ -11,13 +11,9 @@ import org.jsoup.Connection;
 import org.jsoup.nodes.Document;
 
 import javax.swing.*;
-import javax.swing.text.AttributeSet;
-import javax.swing.text.SimpleAttributeSet;
-import javax.swing.text.StyleConstants;
-import javax.swing.text.StyleContext;
+import javax.swing.text.*;
 import java.awt.*;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.awt.event.*;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -29,12 +25,15 @@ import static org.jsoup.Jsoup.connect;
 public class BoardListApp extends JFrame {
 
     private List<Disposable> disposables = new ArrayList<>();
+
     private JTextPane textArea;
+
+    private JPopupMenu menu = new JPopupMenu();
 
     public BoardListApp() {
         super("UserApp");
         init();
-        setSize(600, 400);
+        setSize(800, 600);
         setLocationRelativeTo(null);
         setVisible(true);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -77,10 +76,30 @@ public class BoardListApp extends JFrame {
     }
 
     private void init() {
+        initMenu();
+
         JToolBar toolbar = new JToolBar();
 
         JTextField searchField = new JTextField();
+        searchField.setComponentPopupMenu(menu);
+        searchField.addKeyListener(new KeyListener() {
+            @Override
+            public void keyTyped(KeyEvent e) {
 
+            }
+
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                    process(searchField.getText());
+                }
+            }
+
+            @Override
+            public void keyReleased(KeyEvent e) {
+
+            }
+        });
         toolbar.add(searchField);
 
         JButton processButton = new JButton("process");
@@ -90,7 +109,21 @@ public class BoardListApp extends JFrame {
         add(toolbar, BorderLayout.NORTH);
 
         textArea = new JTextPane();
+        textArea.setComponentPopupMenu(menu);
         add(new JScrollPane(textArea), BorderLayout.CENTER);
+    }
+
+    private void initMenu() {
+        addAction(new DefaultEditorKit.CutAction(), KeyEvent.VK_X, "Cut");
+        addAction(new DefaultEditorKit.CopyAction(), KeyEvent.VK_C, "Copy");
+        addAction(new DefaultEditorKit.PasteAction(), KeyEvent.VK_V, "Paste");
+    }
+
+    private void addAction(TextAction action, int key, String text) {
+        action.putValue(AbstractAction.ACCELERATOR_KEY,
+                KeyStroke.getKeyStroke(key, InputEvent.CTRL_DOWN_MASK));
+        action.putValue(AbstractAction.NAME, text);
+        menu.add(new JMenuItem(action));
     }
 
     private void process(String text) {
@@ -114,12 +147,12 @@ public class BoardListApp extends JFrame {
                     Dao.CreateOrUpdateStatus res = dao.createOrUpdate(board);
                     if (res.isCreated()) {
                         appendToPane(textArea, board.getTitle() + " / " + board.getPinCount() +
-                                ", " + board.getFollowerCount() + " /\r\n", Color.decode("#006400"));
-                        appendToPane(textArea, "\t" + board.getRef() + "\r\n", Color.decode("#006400"));
+                                ", " + board.getFollowerCount() + " /\r\n", Color.decode("#e88000"));
+                        appendToPane(textArea, "\t" + board.getRef() + "\r\n", Color.decode("#e88000"));
                     } else {
                         appendToPane(textArea, board.getTitle() + " / " + board.getPinCount() +
-                                ", " + board.getFollowerCount() + " /\r\n", Color.decode("#8B0000"));
-                        appendToPane(textArea, "\t" + board.getRef() + "\r\n", Color.decode("#8B0000"));
+                                ", " + board.getFollowerCount() + " /\r\n", Color.decode("#0068e8"));
+                        appendToPane(textArea, "\t" + board.getRef() + "\r\n", Color.decode("#0068e8"));
                     }
                 } catch (SQLException e) {
                     e.printStackTrace();

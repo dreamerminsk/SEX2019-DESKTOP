@@ -5,9 +5,13 @@ import ch.caro62.model.ModelSource;
 import ch.caro62.model.User;
 import ch.caro62.parser.UserParser;
 import com.j256.ormlite.dao.Dao;
+import io.reactivex.BackpressureStrategy;
+import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.disposables.Disposable;
+import io.reactivex.schedulers.Schedulers;
 import org.jsoup.Connection;
+import org.jsoup.HttpStatusException;
 import org.jsoup.nodes.Document;
 
 import javax.swing.*;
@@ -71,7 +75,14 @@ public class UserApp extends JFrame {
         JToolBar toolbar = new JToolBar();
 
         JButton processButton = new JButton("process");
-        processButton.addActionListener(e -> newUser());
+        processButton.addActionListener(e -> {
+            Disposable d = Completable
+                    .fromRunnable(this::newUser)
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(Schedulers.single())
+                    .subscribe();
+            disposables.add(d);
+        });
         toolbar.add(processButton);
 
         JButton updateButton = new JButton("update");
@@ -85,17 +96,36 @@ public class UserApp extends JFrame {
         toolbar.add(updateButton);
 
         add(toolbar, BorderLayout.NORTH);
+
+
     }
 
     private void updateUser() throws SQLException {
         Disposable boobies = Flowable
-                .interval(8, TimeUnit.SECONDS)
+                .interval(0, 12, TimeUnit.SECONDS)
                 .doOnNext(System.out::println)
                 .flatMap((id) -> getNeedUpdate())
                 .flatMap(UserApp::getUser)
                 .flatMap(UserParser::parse)
-                .subscribe(this::saveUser);
+                .subscribe(this::saveUser, this::processError);
         disposables.add(boobies);
+    }
+
+    private void processError(Throwable throwable) {
+        if (throwable.getClass().isAssignableFrom(HttpStatusException.class)) {
+            HttpStatusException exc = (HttpStatusException) throwable;
+            String url = exc.getUrl();
+            String[] items = url.split("/");
+            String userRef = items[items.length - 1];
+            User user = new User();
+            user.setName(userRef);
+            user.setRef(userRef);
+            try {
+                saveUser(user);
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     private void saveUser(User user) throws SQLException {
@@ -133,6 +163,12 @@ public class UserApp extends JFrame {
         } catch (SQLException ex) {
             ex.printStackTrace();
         }
+    }
+
+    private void newUser2() {
+        Flowable.create(emitter -> {
+
+        }, BackpressureStrategy.BUFFER);
     }
 
 }
