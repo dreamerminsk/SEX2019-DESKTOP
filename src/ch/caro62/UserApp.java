@@ -75,6 +75,7 @@ public class UserApp extends JFrame {
         JToolBar toolbar = new JToolBar();
 
         JButton processButton = new JButton("process");
+
         processButton.addActionListener(e -> {
             Disposable d = Completable
                     .fromRunnable(this::newUser)
@@ -97,16 +98,18 @@ public class UserApp extends JFrame {
 
         add(toolbar, BorderLayout.NORTH);
 
-
     }
 
     private void updateUser() throws SQLException {
         Disposable boobies = Flowable
+
                 .interval(0, 12, TimeUnit.SECONDS)
+
                 .doOnNext(System.out::println)
                 .flatMap((id) -> getNeedUpdate())
                 .flatMap(UserApp::getUser)
                 .flatMap(UserParser::parse)
+
                 .subscribe(this::saveUser, this::processError);
         disposables.add(boobies);
     }
@@ -127,6 +130,7 @@ public class UserApp extends JFrame {
             }
         }
     }
+
 
     private void saveUser(User user) throws SQLException {
         Dao<User, String> userDao = ModelSource.getUserDAO();
@@ -165,10 +169,12 @@ public class UserApp extends JFrame {
         }
     }
 
+
     private void newUser2() {
         Flowable.create(emitter -> {
 
         }, BackpressureStrategy.BUFFER);
     }
-
 }
+
+

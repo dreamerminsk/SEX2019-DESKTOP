@@ -76,6 +76,7 @@ public class BoardListApp extends JFrame {
     }
 
     private void init() {
+
         initMenu();
 
         JToolBar toolbar = new JToolBar();
@@ -100,6 +101,7 @@ public class BoardListApp extends JFrame {
 
             }
         });
+
         toolbar.add(searchField);
 
         JButton processButton = new JButton("process");
@@ -109,6 +111,7 @@ public class BoardListApp extends JFrame {
         add(toolbar, BorderLayout.NORTH);
 
         textArea = new JTextPane();
+
         textArea.setComponentPopupMenu(menu);
         add(new JScrollPane(textArea), BorderLayout.CENTER);
     }
@@ -125,7 +128,6 @@ public class BoardListApp extends JFrame {
         action.putValue(AbstractAction.NAME, text);
         menu.add(new JMenuItem(action));
     }
-
     private void process(String text) {
         disposables.forEach(Disposable::dispose);
         disposables.clear();
@@ -147,12 +149,14 @@ public class BoardListApp extends JFrame {
                     Dao.CreateOrUpdateStatus res = dao.createOrUpdate(board);
                     if (res.isCreated()) {
                         appendToPane(textArea, board.getTitle() + " / " + board.getPinCount() +
+
                                 ", " + board.getFollowerCount() + " /\r\n", Color.decode("#e88000"));
                         appendToPane(textArea, "\t" + board.getRef() + "\r\n", Color.decode("#e88000"));
                     } else {
                         appendToPane(textArea, board.getTitle() + " / " + board.getPinCount() +
                                 ", " + board.getFollowerCount() + " /\r\n", Color.decode("#0068e8"));
                         appendToPane(textArea, "\t" + board.getRef() + "\r\n", Color.decode("#0068e8"));
+
                     }
                 } catch (SQLException e) {
                     e.printStackTrace();
