@@ -26,5 +26,17 @@
     <orderEntry type="library" name="io.reactivex.rxjava2:rxjava:2.1.0" level="project" />
     <orderEntry type="library" name="com.j256.ormlite:ormlite-jdbc:5.1" level="project" />
     <orderEntry type="library" name="org.controlsfx:controlsfx:8.40.15" level="project" />
+    <orderEntry type="library" name="com.github.mathiasritter:weblaf-ui:1.2.10" level="project" />
+    <orderEntry type="library" name="com.github.insubstantial:substance:7.3" level="project" />
+    <orderEntry type="library" name="com.github.insubstantial:substance-flamingo:7.3" level="project" />
+    <orderEntry type="library" name="io.dropwizard.metrics:metrics-core:4.1.0" level="project" />
+    <orderEntry type="library" name="org.apache.commons:commons-lang3:3.9" level="project" />
+    <orderEntry type="library" name="joda-time:joda-time:2.10.2" level="project" />
+    <orderEntry type="library" name="commons-io:commons-io:2.6" level="project" />
+    <orderEntry type="library" name="commons-collections:commons-collections:3.2.2" level="project" />
+    <orderEntry type="library" name="commons-codec:commons-codec:1.12" level="project" />
+    <orderEntry type="library" name="org.joda:joda-collect:1.0.1" level="project" />
+    <orderEntry type="library" name="org.joda:joda-convert:2.2.1" level="project" />
+    <orderEntry type="library" name="Simple Logging Facade for Java:1.8.0-beta4" level="project" />
   </component>
 </module>

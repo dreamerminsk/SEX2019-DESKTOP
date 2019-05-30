@@ -1,0 +1,23 @@
+<component name="libraryTable">
+  <library name="com.github.insubstantial:substance:7.3" type="repository">
+    <properties maven-id="com.github.insubstantial:substance:7.3" />
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/substance-7.3.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/trident-7.3.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/laf-plugin-7.3.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/laf-widget-7.3.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$PROJECT_DIR$/lib/substance-7.3-javadoc.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/trident-7.3-javadoc.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/laf-plugin-7.3-javadoc.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/laf-widget-7.3-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$PROJECT_DIR$/lib/substance-7.3-sources.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/trident-7.3-sources.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/laf-plugin-7.3-sources.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/laf-widget-7.3-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

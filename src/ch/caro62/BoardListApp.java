@@ -9,6 +9,7 @@ import io.reactivex.Flowable;
 import io.reactivex.disposables.Disposable;
 import org.jsoup.Connection;
 import org.jsoup.nodes.Document;
+import org.pushingpixels.substance.api.skin.SubstanceCremeLookAndFeel;
 
 import javax.swing.*;
 import javax.swing.text.*;
@@ -46,7 +47,15 @@ public class BoardListApp extends JFrame {
     }
 
     public static void main(String... args) {
-        BoardListApp app = new BoardListApp();
+        try {
+            UIManager.setLookAndFeel(new SubstanceCremeLookAndFeel());
+        } catch (UnsupportedLookAndFeelException e) {
+            e.printStackTrace();
+        }
+        SwingUtilities.invokeLater(() -> {
+            BoardListApp app = new BoardListApp();
+        });
+
     }
 
     private static Flowable<Document> searchBoards() {
@@ -128,6 +137,7 @@ public class BoardListApp extends JFrame {
         action.putValue(AbstractAction.NAME, text);
         menu.add(new JMenuItem(action));
     }
+
     private void process(String text) {
         disposables.forEach(Disposable::dispose);
         disposables.clear();
