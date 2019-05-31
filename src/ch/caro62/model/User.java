@@ -1,10 +1,11 @@
 package ch.caro62.model;
 
 
+import ch.caro62.model.dao.impl.UserDaoImpl;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
 
-@DatabaseTable(tableName = "sexUsers")
+@DatabaseTable(tableName = "sexUsers", daoClass = UserDaoImpl.class)
 public class User {
 
     @DatabaseField(id = true)
