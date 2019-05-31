@@ -12,6 +12,9 @@ public class Board {
     private String ref;
 
     @DatabaseField
+    private String user;
+
+    @DatabaseField
     private String title;
 
     @DatabaseField
@@ -58,5 +61,13 @@ public class Board {
 
     public String toString() {
         return MessageFormat.format("{0} - {1}", title, ref);
+    }
+
+    public String getUser() {
+        return user;
+    }
+
+    public void setUser(String user) {
+        this.user = user;
     }
 }
