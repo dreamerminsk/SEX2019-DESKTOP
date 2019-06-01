@@ -4,6 +4,7 @@ import ch.caro62.model.User;
 import ch.caro62.model.dao.UserDao;
 import com.j256.ormlite.dao.BaseDaoImpl;
 import com.j256.ormlite.support.ConnectionSource;
+import io.reactivex.Flowable;
 
 import java.sql.SQLException;
 
@@ -14,4 +15,8 @@ public class UserDaoImpl extends BaseDaoImpl<User, String> implements UserDao {
         super(connectionSource, User.class);
     }
 
+    @Override
+    public Flowable<User> getRandom() {
+        return Flowable.fromCallable(() -> queryBuilder().orderByRaw("RANDOM()").queryForFirst());
+    }
 }

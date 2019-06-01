@@ -23,9 +23,9 @@ public class WordStats {
                 } else {
                     if (word.length() > 3) {
                         if (Words.containsKey(word)) {
-                            Words.put(word, Words.get(word) + 1);
+                            Words.put(word, Words.get(word) + board.getFollowerCount());
                         } else {
-                            Words.put(word, 1);
+                            Words.put(word, board.getFollowerCount());
                         }
                     }
                     word = "";

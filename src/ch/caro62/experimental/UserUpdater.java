@@ -1,5 +1,12 @@
 package ch.caro62.experimental;
 
+import ch.caro62.model.Board;
+import ch.caro62.model.BoardListPage;
+import ch.caro62.model.ModelSource;
+import ch.caro62.model.User;
+import ch.caro62.model.dao.impl.UserDaoImpl;
+import ch.caro62.parser.BoardListParser;
+import com.j256.ormlite.dao.Dao;
 import io.reactivex.Flowable;
 import io.reactivex.disposables.Disposable;
 import org.jsoup.Connection;
@@ -12,8 +19,10 @@ import javax.swing.text.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static org.jsoup.Jsoup.connect;
 
@@ -38,6 +47,50 @@ public class UserUpdater extends JFrame {
                 disposables.forEach(Disposable::dispose);
             }
         });
+        Disposable d = Flowable.timer(8, TimeUnit.SECONDS)
+                .flatMap((idx) -> {
+                    UserDaoImpl dao = (UserDaoImpl) ModelSource.getUserDAO();
+                    return dao.getRandom();
+                })
+
+                .map((u) -> "https://sex.com/user/" + u.getRef() + "/following/")
+                .flatMap(UserUpdater::getPageAsync)
+                .flatMap(BoardListParser::parse)
+                //.takeUntil(boardListPage -> boardListPage.getNext() == null)
+                .repeat()
+                .subscribe(this::saveBoardList);
+        disposables.add(d);
+    }
+
+    private void boards(User user) {
+        Flowable.just(user)
+                .map(u -> String.format("https://sex.com/user/%s/", u.getRef()));
+    }
+
+    private void saveBoardList(BoardListPage blp) throws SQLException {
+        Dao<Board, String> dao = ModelSource.getBoardDAO();
+        try {
+            blp.getBoards().forEach(board -> {
+                try {
+                    Dao.CreateOrUpdateStatus res = dao.createOrUpdate(board);
+                    if (res.isCreated()) {
+                        appendToPane(textArea, board.getTitle() + " / " + board.getPinCount() +
+
+                                ", " + board.getFollowerCount() + " /\r\n", Color.decode("#e88000"));
+                        appendToPane(textArea, "\t" + board.getRef() + "\r\n", Color.decode("#e88000"));
+                    } else {
+                        appendToPane(textArea, board.getTitle() + " / " + board.getPinCount() +
+                                ", " + board.getFollowerCount() + " /\r\n", Color.decode("#0068e8"));
+                        appendToPane(textArea, "\t" + board.getRef() + "\r\n", Color.decode("#0068e8"));
+
+                    }
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            });
+        } finally {
+            //dao.getConnectionSource().closeQuietly();
+        }
     }
 
     public static void main(String... args) {
@@ -104,7 +157,6 @@ public class UserUpdater extends JFrame {
         add(toolbar, BorderLayout.NORTH);
 
         textArea = new JTextPane();
-
         textArea.setComponentPopupMenu(menu);
         add(new JScrollPane(textArea), BorderLayout.CENTER);
     }
