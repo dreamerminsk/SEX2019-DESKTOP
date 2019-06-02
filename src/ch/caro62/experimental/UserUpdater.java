@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -97,8 +98,10 @@ public class UserUpdater extends JFrame {
 
     private Flowable<BoardListPage> boards(String ref) {
         AtomicReference<String> next = new AtomicReference<>(ref);
+        Random random = new Random();
         return RxUtils.naturalNumbers()
-                .concatMap(item -> Flowable.just(item).delay(4, TimeUnit.SECONDS))
+                .concatMap(item -> Flowable.just(item).delay(
+                        4 + random.nextInt(8), TimeUnit.SECONDS))
                 .map(idx -> next.getAndSet(""))
                 .filter(item -> item.length() > 0)
                 .flatMap(UserUpdater::getPageAsync)

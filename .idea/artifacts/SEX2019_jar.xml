@@ -25,26 +25,10 @@
       <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/xerial/sqlite-jdbc/3.27.2.1/sqlite-jdbc-3.27.2.1.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$PROJECT_DIR$/lib/okhttp-3.14.2.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$PROJECT_DIR$/lib/okio-1.17.2.jar" path-in-jar="/" />
-      <element id="library" level="project" name="com.github.akarnokd:rxjava2-extensions:0.20.8" />
-      <element id="library" level="project" name="com.github.insubstantial:substance-flamingo:7.3" />
-      <element id="library" level="project" name="com.github.insubstantial:substance:7.3" />
-      <element id="library" level="project" name="com.github.mathiasritter:weblaf-ui:1.2.10" />
-      <element id="library" level="project" name="com.google.guava:guava:27.1-jre" />
-      <element id="library" level="project" name="com.j256.ormlite:ormlite-jdbc:5.1" />
-      <element id="library" level="project" name="com.squareup.okhttp3:okhttp:3.14.2" />
-      <element id="library" level="project" name="commons-codec:commons-codec:1.12" />
-      <element id="library" level="project" name="commons-collections:commons-collections:3.2.2" />
-      <element id="library" level="project" name="commons-io:commons-io:2.6" />
-      <element id="library" level="project" name="io.dropwizard.metrics:metrics-core:4.1.0" />
-      <element id="library" level="project" name="io.reactivex.rxjava2:rxjava:2.1.0" />
-      <element id="library" level="project" name="joda-time:joda-time:2.10.2" />
-      <element id="library" level="project" name="org.apache.commons:commons-lang3:3.9" />
-      <element id="library" level="project" name="org.controlsfx:controlsfx:8.40.15" />
-      <element id="library" level="project" name="org.joda:joda-collect:1.0.1" />
-      <element id="library" level="project" name="org.joda:joda-convert:2.2.1" />
-      <element id="library" level="project" name="org.jsoup:jsoup:1.12.1" />
-      <element id="library" level="project" name="org.xerial:sqlite-jdbc:3.27.2.1" />
-      <element id="library" level="project" name="Simple Logging Facade for Java:1.8.0-beta4" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/lib/substance-7.3.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/lib/trident-7.3.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/lib/laf-plugin-7.3.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$PROJECT_DIR$/lib/laf-widget-7.3.jar" path-in-jar="/" />
     </root>
   </artifact>
 </component>
