@@ -6,6 +6,7 @@ import ch.caro62.model.ModelSource;
 import ch.caro62.model.User;
 import ch.caro62.model.dao.impl.UserDaoImpl;
 import ch.caro62.parser.BoardListParser;
+import ch.caro62.utils.RxUtils;
 import com.j256.ormlite.dao.Dao;
 import io.reactivex.Flowable;
 import io.reactivex.disposables.Disposable;
@@ -23,6 +24,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.jsoup.Jsoup.connect;
 
@@ -52,45 +54,14 @@ public class UserUpdater extends JFrame {
                     UserDaoImpl dao = (UserDaoImpl) ModelSource.getUserDAO();
                     return dao.getRandom();
                 })
-
-                .map((u) -> "https://sex.com/user/" + u.getRef() + "/following/")
-                .flatMap(UserUpdater::getPageAsync)
-                .flatMap(BoardListParser::parse)
-                //.takeUntil(boardListPage -> boardListPage.getNext() == null)
+                .doOnNext((item) -> setAppTitle(item.getRef()))
+                .flatMap((u) -> boards(String.format("https://sex.com/user/%s/", u.getRef()))
+                        .mergeWith(boards(String.format("https://sex.com/user/%s/following/", u.getRef()))))
                 .repeat()
+                .doOnError((e) -> System.out.println(e.getLocalizedMessage()))
+                .retry()
                 .subscribe(this::saveBoardList);
         disposables.add(d);
-    }
-
-    private void boards(User user) {
-        Flowable.just(user)
-                .map(u -> String.format("https://sex.com/user/%s/", u.getRef()));
-    }
-
-    private void saveBoardList(BoardListPage blp) throws SQLException {
-        Dao<Board, String> dao = ModelSource.getBoardDAO();
-        try {
-            blp.getBoards().forEach(board -> {
-                try {
-                    Dao.CreateOrUpdateStatus res = dao.createOrUpdate(board);
-                    if (res.isCreated()) {
-                        appendToPane(textArea, board.getTitle() + " / " + board.getPinCount() +
-
-                                ", " + board.getFollowerCount() + " /\r\n", Color.decode("#e88000"));
-                        appendToPane(textArea, "\t" + board.getRef() + "\r\n", Color.decode("#e88000"));
-                    } else {
-                        appendToPane(textArea, board.getTitle() + " / " + board.getPinCount() +
-                                ", " + board.getFollowerCount() + " /\r\n", Color.decode("#0068e8"));
-                        appendToPane(textArea, "\t" + board.getRef() + "\r\n", Color.decode("#0068e8"));
-
-                    }
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
-            });
-        } finally {
-            //dao.getConnectionSource().closeQuietly();
-        }
     }
 
     public static void main(String... args) {
@@ -105,7 +76,6 @@ public class UserUpdater extends JFrame {
         SwingUtilities.invokeLater(() -> {
             UserUpdater app = new UserUpdater();
         });
-
     }
 
     private static Flowable<Document> getPageAsync(String ref) {
@@ -119,6 +89,51 @@ public class UserUpdater extends JFrame {
         } catch (IOException e) {
             throw e;
         }
+    }
+
+    private void setAppTitle(String title) {
+        SwingUtilities.invokeLater(() -> this.setTitle(title + " - UserUpdater"));
+    }
+
+    private Flowable<BoardListPage> boards(String ref) {
+        AtomicReference<String> next = new AtomicReference<>(ref);
+        return RxUtils.naturalNumbers()
+                .concatMap(item -> Flowable.just(item).delay(4, TimeUnit.SECONDS))
+                .map(idx -> next.getAndSet(""))
+                .filter(item -> item.length() > 0)
+                .flatMap(UserUpdater::getPageAsync)
+                .flatMap(BoardListParser::parse)
+                .doOnNext(blp -> next.set(blp.getNext()))
+                .takeUntil(boardListPage -> boardListPage.getNext().length() == 0)
+                .doOnError(e -> System.out.println(e.getMessage()));
+    }
+
+    private void saveBoardList(BoardListPage blp) throws SQLException {
+        Dao<Board, String> boardDAO = ModelSource.getBoardDAO();
+        Dao<User, String> userDao = ModelSource.getUserDAO();
+        blp.getBoards().forEach(board -> {
+            try {
+                String user = board.getRef().split("/")[2];
+                User u = new User();
+                u.setRef(user);
+                userDao.createIfNotExists(u);
+                board.setUser(user);
+                Dao.CreateOrUpdateStatus res = boardDAO.createOrUpdate(board);
+                if (res.isCreated()) {
+                    appendToPane(textArea, board.getTitle() + " / " + board.getPinCount() +
+
+                            ", " + board.getFollowerCount() + " /\r\n", Color.decode("#e88000"));
+                    appendToPane(textArea, "\t" + board.getRef() + "\r\n", Color.decode("#e88000"));
+                } else {
+                    appendToPane(textArea, board.getTitle() + " / " + board.getPinCount() +
+                            ", " + board.getFollowerCount() + " /\r\n", Color.decode("#0068e8"));
+                    appendToPane(textArea, "\t" + board.getRef() + "\r\n", Color.decode("#0068e8"));
+
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        });
     }
 
     private void init() {

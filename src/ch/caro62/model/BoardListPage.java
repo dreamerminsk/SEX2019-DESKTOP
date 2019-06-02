@@ -8,7 +8,7 @@ public class BoardListPage {
 
     private List<Board> boards = new ArrayList<>();
 
-    private String next;
+    private String next = "";
 
     public BoardListPage() {
 
