@@ -11,7 +11,9 @@ import ch.caro62.utils.RxUtils;
 import com.j256.ormlite.dao.Dao;
 import io.reactivex.Flowable;
 import io.reactivex.disposables.Disposable;
-import org.joda.time.Instant;
+import org.joda.time.DateTime;
+import org.joda.time.Period;
+import org.joda.time.format.PeriodFormat;
 import org.jsoup.Connection;
 import org.jsoup.nodes.Document;
 import org.pushingpixels.substance.api.SubstanceLookAndFeel;
@@ -33,7 +35,7 @@ import static org.jsoup.Jsoup.connect;
 
 public class UserUpdater extends JFrame {
 
-    private Instant started = new Instant();
+    private DateTime started = DateTime.now();
 
     private List<Disposable> disposables = new ArrayList<>();
 
@@ -101,9 +103,9 @@ public class UserUpdater extends JFrame {
     private void setAppTitle(String title) {
         SwingUtilities.invokeLater(
                 () -> {
-                    Instant diff = new Instant().minus(started.getMillis());
-                    this.setTitle(title + " - UserUpdater /" +
-                            (diff.toString()));
+                    Period diff = new Period(started, DateTime.now());
+                    this.setTitle(title + " - UserUpdater / " +
+                            PeriodFormat.getDefault().print(diff));
                 });
     }
 
