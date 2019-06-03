@@ -21,6 +21,18 @@ public class StatsModel extends DefaultTableModel {
         this.addRow(new Object[]{"total", totalBoards, totalPins, totalFollowers});
     }
 
+    public boolean isCellEditable(int row, int column) {
+        return false;
+    }
+
+    public Class<?> getColumnClass(int columnIndex) {
+        if (columnIndex == 0) {
+            return String.class;
+        }
+        return Integer.class;
+
+    }
+
     public void addNewBoard(int pins, int followers) {
         newBoards++;
         newPins += pins;
