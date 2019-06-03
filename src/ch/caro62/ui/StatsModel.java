@@ -8,12 +8,17 @@ public class StatsModel extends DefaultTableModel {
     private int newPins = 0;
     private int newFollowers = 0;
 
+    private int totalBoards = 0;
+    private int totalPins = 0;
+    private int totalFollowers = 0;
+
     public StatsModel() {
         this.addColumn("name");
         this.addColumn("boards");
         this.addColumn("pins");
         this.addColumn("followers");
         this.addRow(new Object[]{"new", newBoards, newPins, newFollowers});
+        this.addRow(new Object[]{"total", totalBoards, totalPins, totalFollowers});
     }
 
     public void addNewBoard(int pins, int followers) {
@@ -23,6 +28,22 @@ public class StatsModel extends DefaultTableModel {
         this.setValueAt(newBoards, 0, 1);
         this.setValueAt(newPins, 0, 2);
         this.setValueAt(newFollowers, 0, 3);
+
+        totalBoards++;
+        totalPins += pins;
+        totalFollowers += followers;
+        this.setValueAt(totalBoards, 1, 1);
+        this.setValueAt(totalPins, 1, 2);
+        this.setValueAt(totalFollowers, 1, 3);
+    }
+
+    public void addBoard(int pins, int followers) {
+        totalBoards++;
+        totalPins += pins;
+        totalFollowers += followers;
+        this.setValueAt(totalBoards, 1, 1);
+        this.setValueAt(totalPins, 1, 2);
+        this.setValueAt(totalFollowers, 1, 3);
     }
 
 }

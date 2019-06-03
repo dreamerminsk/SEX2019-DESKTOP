@@ -132,6 +132,7 @@ public class UserUpdater extends JFrame {
                             ", " + board.getFollowerCount() + " /\r\n", Color.decode("#e88000"));
                     appendToPane(textArea, "\t" + board.getRef() + "\r\n", Color.decode("#e88000"));
                 } else {
+                    model.addBoard(board.getPinCount(), board.getFollowerCount());
                     appendToPane(textArea, board.getTitle() + " / " + board.getPinCount() +
                             ", " + board.getFollowerCount() + " /\r\n", Color.decode("#0068e8"));
                     appendToPane(textArea, "\t" + board.getRef() + "\r\n", Color.decode("#0068e8"));
