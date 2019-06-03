@@ -11,6 +11,7 @@ import ch.caro62.utils.RxUtils;
 import com.j256.ormlite.dao.Dao;
 import io.reactivex.Flowable;
 import io.reactivex.disposables.Disposable;
+import org.joda.time.Instant;
 import org.jsoup.Connection;
 import org.jsoup.nodes.Document;
 import org.pushingpixels.substance.api.SubstanceLookAndFeel;
@@ -31,6 +32,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import static org.jsoup.Jsoup.connect;
 
 public class UserUpdater extends JFrame {
+
+    private Instant started = new Instant();
 
     private List<Disposable> disposables = new ArrayList<>();
 
@@ -96,7 +99,12 @@ public class UserUpdater extends JFrame {
     }
 
     private void setAppTitle(String title) {
-        SwingUtilities.invokeLater(() -> this.setTitle(title + " - UserUpdater"));
+        SwingUtilities.invokeLater(
+                () -> {
+                    Instant diff = new Instant().minus(started.getMillis());
+                    this.setTitle(title + " - UserUpdater /" +
+                            (diff.toString()));
+                });
     }
 
     private Flowable<BoardListPage> boards(String ref) {
@@ -185,12 +193,12 @@ public class UserUpdater extends JFrame {
         textArea.setComponentPopupMenu(menu);
         model = new StatsModel();
         JTable table = new JTable(model);
-        table.setFont(table.getFont().deriveFont(10.75f));
-        JPanel tablePanel = new JPanel(new FlowLayout());
+        table.setFont(table.getFont().deriveFont(11.75f));
+        JScrollPane tablePanel = new JScrollPane(table);
         tablePanel.setBorder(BorderFactory.createTitledBorder("boards stats"));
-        mainSplitPane.setTopComponent(new JScrollPane(table));
+        mainSplitPane.setTopComponent(tablePanel);
         mainSplitPane.setBottomComponent(new JScrollPane(textArea));
-        mainSplitPane.setDividerLocation(50);
+        mainSplitPane.setDividerLocation(75);
         add(mainSplitPane, BorderLayout.CENTER);
     }
 
