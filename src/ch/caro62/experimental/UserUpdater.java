@@ -126,6 +126,7 @@ public class UserUpdater extends JFrame {
                 board.setUser(user);
                 Dao.CreateOrUpdateStatus res = boardDAO.createOrUpdate(board);
                 if (res.isCreated()) {
+                    model.addNewBoard(board.getPinCount(), board.getFollowerCount());
                     appendToPane(textArea, board.getTitle() + " / " + board.getPinCount() +
 
                             ", " + board.getFollowerCount() + " /\r\n", Color.decode("#e88000"));
