@@ -6,6 +6,7 @@ import ch.caro62.model.ModelSource;
 import ch.caro62.model.User;
 import ch.caro62.model.dao.impl.UserDaoImpl;
 import ch.caro62.parser.BoardListParser;
+import ch.caro62.ui.StatsModel;
 import ch.caro62.utils.RxUtils;
 import com.j256.ormlite.dao.Dao;
 import io.reactivex.Flowable;
@@ -36,6 +37,8 @@ public class UserUpdater extends JFrame {
     private JTextPane textArea;
 
     private JPopupMenu menu = new JPopupMenu();
+
+    private StatsModel model;
 
     public UserUpdater() {
         super("UserUpdater");
@@ -178,7 +181,8 @@ public class UserUpdater extends JFrame {
 
         textArea = new JTextPane();
         textArea.setComponentPopupMenu(menu);
-        mainSplitPane.setTopComponent(new JScrollPane(new JTable(2, 4)));
+        model = new StatsModel();
+        mainSplitPane.setTopComponent(new JScrollPane(new JTable(model)));
         mainSplitPane.setBottomComponent(new JScrollPane(textArea));
         mainSplitPane.setDividerLocation(50);
         add(mainSplitPane, BorderLayout.CENTER);
