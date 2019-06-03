@@ -186,6 +186,8 @@ public class UserUpdater extends JFrame {
         model = new StatsModel();
         JTable table = new JTable(model);
         table.setFont(table.getFont().deriveFont(10.75f));
+        JPanel tablePanel = new JPanel(new FlowLayout());
+        tablePanel.setBorder(BorderFactory.createTitledBorder("boards stats"));
         mainSplitPane.setTopComponent(new JScrollPane(table));
         mainSplitPane.setBottomComponent(new JScrollPane(textArea));
         mainSplitPane.setDividerLocation(50);
