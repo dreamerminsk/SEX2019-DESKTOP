@@ -184,7 +184,9 @@ public class UserUpdater extends JFrame {
         textArea = new JTextPane();
         textArea.setComponentPopupMenu(menu);
         model = new StatsModel();
-        mainSplitPane.setTopComponent(new JScrollPane(new JTable(model)));
+        JTable table = new JTable(model);
+        table.setFont(table.getFont().deriveFont(10.75f));
+        mainSplitPane.setTopComponent(new JScrollPane(table));
         mainSplitPane.setBottomComponent(new JScrollPane(textArea));
         mainSplitPane.setDividerLocation(50);
         add(mainSplitPane, BorderLayout.CENTER);
