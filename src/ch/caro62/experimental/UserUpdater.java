@@ -180,6 +180,7 @@ public class UserUpdater extends JFrame {
         textArea.setComponentPopupMenu(menu);
         mainSplitPane.setTopComponent(new JScrollPane(new JTable(2, 4)));
         mainSplitPane.setBottomComponent(new JScrollPane(textArea));
+        mainSplitPane.setDividerLocation(50);
         add(mainSplitPane, BorderLayout.CENTER);
     }
 
