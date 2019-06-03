@@ -174,9 +174,13 @@ public class UserUpdater extends JFrame {
 
         add(toolbar, BorderLayout.NORTH);
 
+        JSplitPane mainSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
+
         textArea = new JTextPane();
         textArea.setComponentPopupMenu(menu);
-        add(new JScrollPane(textArea), BorderLayout.CENTER);
+        mainSplitPane.setTopComponent(new JScrollPane(new JTable(2, 4)));
+        mainSplitPane.setBottomComponent(new JScrollPane(textArea));
+        add(mainSplitPane, BorderLayout.CENTER);
     }
 
     private void initMenu() {
