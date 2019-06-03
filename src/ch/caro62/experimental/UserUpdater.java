@@ -13,7 +13,8 @@ import io.reactivex.Flowable;
 import io.reactivex.disposables.Disposable;
 import org.joda.time.DateTime;
 import org.joda.time.Period;
-import org.joda.time.format.PeriodFormat;
+import org.joda.time.format.PeriodFormatter;
+import org.joda.time.format.PeriodFormatterBuilder;
 import org.jsoup.Connection;
 import org.jsoup.nodes.Document;
 import org.pushingpixels.substance.api.SubstanceLookAndFeel;
@@ -35,14 +36,28 @@ import static org.jsoup.Jsoup.connect;
 
 public class UserUpdater extends JFrame {
 
+    PeriodFormatter daysHoursMinutes = new PeriodFormatterBuilder()
+            .appendDays()
+            .appendSuffix(" d", " d")
+            .appendSeparator(" ")
+            .appendHours()
+            .minimumPrintedDigits(2)
+            .printZeroAlways()
+            .appendSeparator(":")
+            .appendMinutes()
+            .minimumPrintedDigits(2)
+            .printZeroAlways()
+            .appendSeparator(":")
+            .appendSeconds()
+            .minimumPrintedDigits(2)
+            .printZeroAlways()
+            .toFormatter();
+
     private DateTime started = DateTime.now();
-
+    private AtomicReference<String> currentUser = new AtomicReference<>("");
     private List<Disposable> disposables = new ArrayList<>();
-
     private JTextPane textArea;
-
     private JPopupMenu menu = new JPopupMenu();
-
     private StatsModel model;
 
     public UserUpdater() {
@@ -58,12 +73,15 @@ public class UserUpdater extends JFrame {
                 disposables.forEach(Disposable::dispose);
             }
         });
+        Disposable disposable = Flowable.interval(0, 1, TimeUnit.SECONDS)
+                .subscribe(idx -> setAppTitle());
+        disposables.add(disposable);
         Disposable d = Flowable.timer(8, TimeUnit.SECONDS)
                 .flatMap((idx) -> {
                     UserDaoImpl dao = (UserDaoImpl) ModelSource.getUserDAO();
                     return dao.getRandom();
                 })
-                .doOnNext((item) -> setAppTitle(item.getRef()))
+                .doOnNext((item) -> currentUser.set(item.getRef()))
                 .flatMap((u) -> boards(String.format("https://sex.com/user/%s/", u.getRef()))
                         .mergeWith(boards(String.format("https://sex.com/user/%s/following/", u.getRef()))))
                 .repeat()
@@ -100,12 +118,12 @@ public class UserUpdater extends JFrame {
         }
     }
 
-    private void setAppTitle(String title) {
+    private void setAppTitle() {
         SwingUtilities.invokeLater(
                 () -> {
                     Period diff = new Period(started, DateTime.now());
-                    this.setTitle(title + " - UserUpdater / " +
-                            PeriodFormat.getDefault().print(diff));
+                    this.setTitle(currentUser.get() + " - UserUpdater / " +
+                            daysHoursMinutes.print(diff));
                 });
     }
 
@@ -200,7 +218,7 @@ public class UserUpdater extends JFrame {
         tablePanel.setBorder(BorderFactory.createTitledBorder("boards stats"));
         mainSplitPane.setTopComponent(tablePanel);
         mainSplitPane.setBottomComponent(new JScrollPane(textArea));
-        mainSplitPane.setDividerLocation(75);
+        mainSplitPane.setDividerLocation(80);
         add(mainSplitPane, BorderLayout.CENTER);
     }
 
