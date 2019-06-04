@@ -6,6 +6,7 @@ import ch.caro62.model.ModelSource;
 import ch.caro62.model.User;
 import ch.caro62.model.dao.impl.UserDaoImpl;
 import ch.caro62.parser.BoardListParser;
+import ch.caro62.ui.BoardModel;
 import ch.caro62.ui.StatsModel;
 import ch.caro62.utils.RxUtils;
 import com.j256.ormlite.dao.Dao;
@@ -36,14 +37,15 @@ import static org.jsoup.Jsoup.connect;
 public class UserUpdater extends JFrame {
 
 
-    public static final Color NewItemColor = Color.decode("#e88000");
-    public static final Color OldItemColor = Color.decode("#0068e8");
+    private static final Color NewItemColor = Color.decode("#e88000");
+    private static final Color OldItemColor = Color.decode("#0068e8");
     private DateTime started = DateTime.now();
     private AtomicReference<String> currentUser = new AtomicReference<>("");
     private List<Disposable> disposables = new ArrayList<>();
     private JTextPane textArea;
     private JPopupMenu menu = new JPopupMenu();
     private StatsModel model;
+    private BoardModel boardModel;
 
     public UserUpdater() {
         super("UserUpdater");
@@ -140,15 +142,16 @@ public class UserUpdater extends JFrame {
                 Dao.CreateOrUpdateStatus res = boardDAO.createOrUpdate(board);
                 if (res.isCreated()) {
                     model.addNewBoard(board.getPinCount(), board.getFollowerCount());
-                    appendToPane(textArea, board.getTitle() + " / " + board.getPinCount() +
-
-                            ", " + board.getFollowerCount() + " /\r\n", NewItemColor);
-                    appendToPane(textArea, "\t" + board.getRef() + "\r\n", NewItemColor);
+                    boardModel.addBoard(board);
+                    //appendToPane(textArea, board.getTitle() + " / " + board.getPinCount() +
+                    //        ", " + board.getFollowerCount() + " /\r\n", NewItemColor);
+                    //appendToPane(textArea, "\t" + board.getRef() + "\r\n", NewItemColor);
                 } else {
                     model.addBoard(board.getPinCount(), board.getFollowerCount());
-                    appendToPane(textArea, board.getTitle() + " / " + board.getPinCount() +
-                            ", " + board.getFollowerCount() + " /\r\n", OldItemColor);
-                    appendToPane(textArea, "\t" + board.getRef() + "\r\n", OldItemColor);
+                    boardModel.addBoard(board);
+                    //appendToPane(textArea, board.getTitle() + " / " + board.getPinCount() +
+                    //        ", " + board.getFollowerCount() + " /\r\n", OldItemColor);
+                    //appendToPane(textArea, "\t" + board.getRef() + "\r\n", OldItemColor);
 
                 }
             } catch (SQLException e) {
@@ -202,7 +205,9 @@ public class UserUpdater extends JFrame {
         JScrollPane tablePanel = new JScrollPane(table);
         tablePanel.setBorder(BorderFactory.createTitledBorder("boards stats"));
         mainSplitPane.setTopComponent(tablePanel);
-        mainSplitPane.setBottomComponent(new JScrollPane(textArea));
+        boardModel = new BoardModel();
+        JTable boardTable = new JTable(boardModel);
+        mainSplitPane.setBottomComponent(new JScrollPane(boardTable));
         mainSplitPane.setDividerLocation(80);
         add(mainSplitPane, BorderLayout.CENTER);
     }
