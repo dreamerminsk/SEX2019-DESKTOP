@@ -13,8 +13,6 @@ import io.reactivex.Flowable;
 import io.reactivex.disposables.Disposable;
 import org.joda.time.DateTime;
 import org.joda.time.Period;
-import org.joda.time.format.PeriodFormatter;
-import org.joda.time.format.PeriodFormatterBuilder;
 import org.jsoup.Connection;
 import org.jsoup.nodes.Document;
 import org.pushingpixels.substance.api.SubstanceLookAndFeel;
@@ -32,27 +30,14 @@ import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static ch.caro62.utils.DateTimeUtils.daysHoursMinutes;
 import static org.jsoup.Jsoup.connect;
 
 public class UserUpdater extends JFrame {
 
-    PeriodFormatter daysHoursMinutes = new PeriodFormatterBuilder()
-            .appendDays()
-            .appendSuffix(" d", " d")
-            .appendSeparator(" ")
-            .appendHours()
-            .minimumPrintedDigits(2)
-            .printZeroAlways()
-            .appendSeparator(":")
-            .appendMinutes()
-            .minimumPrintedDigits(2)
-            .printZeroAlways()
-            .appendSeparator(":")
-            .appendSeconds()
-            .minimumPrintedDigits(2)
-            .printZeroAlways()
-            .toFormatter();
 
+    public static final Color NewItemColor = Color.decode("#e88000");
+    public static final Color OldItemColor = Color.decode("#0068e8");
     private DateTime started = DateTime.now();
     private AtomicReference<String> currentUser = new AtomicReference<>("");
     private List<Disposable> disposables = new ArrayList<>();
@@ -157,13 +142,13 @@ public class UserUpdater extends JFrame {
                     model.addNewBoard(board.getPinCount(), board.getFollowerCount());
                     appendToPane(textArea, board.getTitle() + " / " + board.getPinCount() +
 
-                            ", " + board.getFollowerCount() + " /\r\n", Color.decode("#e88000"));
-                    appendToPane(textArea, "\t" + board.getRef() + "\r\n", Color.decode("#e88000"));
+                            ", " + board.getFollowerCount() + " /\r\n", NewItemColor);
+                    appendToPane(textArea, "\t" + board.getRef() + "\r\n", NewItemColor);
                 } else {
                     model.addBoard(board.getPinCount(), board.getFollowerCount());
                     appendToPane(textArea, board.getTitle() + " / " + board.getPinCount() +
-                            ", " + board.getFollowerCount() + " /\r\n", Color.decode("#0068e8"));
-                    appendToPane(textArea, "\t" + board.getRef() + "\r\n", Color.decode("#0068e8"));
+                            ", " + board.getFollowerCount() + " /\r\n", OldItemColor);
+                    appendToPane(textArea, "\t" + board.getRef() + "\r\n", OldItemColor);
 
                 }
             } catch (SQLException e) {
