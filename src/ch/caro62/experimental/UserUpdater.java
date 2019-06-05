@@ -9,7 +9,8 @@ import ch.caro62.parser.BoardListParser;
 import ch.caro62.ui.BoardModel;
 import ch.caro62.ui.StatsModel;
 import ch.caro62.utils.RxUtils;
-import com.alee.utils.SystemUtils;
+import ch.caro62.view.BoardView;
+import ch.caro62.view.UserView;
 import com.j256.ormlite.dao.Dao;
 import io.reactivex.Flowable;
 import io.reactivex.disposables.Disposable;
@@ -47,10 +48,10 @@ public class UserUpdater extends JFrame {
     private JPopupMenu menu = new JPopupMenu();
     private StatsModel model;
     private BoardModel boardModel;
+    private JTable boardTable;
 
     public UserUpdater() {
         super("UserUpdater");
-        JOptionPane.showMessageDialog(this.rootPane, SystemUtils.getOsName());
         init();
         setSize(800, 600);
         setLocationRelativeTo(null);
@@ -149,7 +150,7 @@ public class UserUpdater extends JFrame {
                     //        ", " + board.getFollowerCount() + " /\r\n", NewItemColor);
                     //appendToPane(textArea, "\t" + board.getRef() + "\r\n", NewItemColor);
                 } else {
-                    model.addBoard(board.getPinCount(), board.getFollowerCount());
+                    model.addExistingBoard(board.getPinCount(), board.getFollowerCount());
                     boardModel.addBoard(board);
                     //appendToPane(textArea, board.getTitle() + " / " + board.getPinCount() +
                     //        ", " + board.getFollowerCount() + " /\r\n", OldItemColor);
@@ -166,51 +167,37 @@ public class UserUpdater extends JFrame {
 
         initMenu();
 
-        JToolBar toolbar = new JToolBar();
-
-        JTextField searchField = new JTextField();
-        searchField.setComponentPopupMenu(menu);
-        searchField.addKeyListener(new KeyListener() {
-            @Override
-            public void keyTyped(KeyEvent e) {
-
-            }
-
-            @Override
-            public void keyPressed(KeyEvent e) {
-                if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-                    //process(searchField.getText());
-                }
-            }
-
-            @Override
-            public void keyReleased(KeyEvent e) {
-
-            }
-        });
-
-        toolbar.add(searchField);
-
-        JButton processButton = new JButton("process");
-        //processButton.addActionListener(e -> process(searchField.getText()));
-        toolbar.add(processButton);
-
-        add(toolbar, BorderLayout.NORTH);
-
         JSplitPane mainSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
 
         textArea = new JTextPane();
         textArea.setComponentPopupMenu(menu);
         model = new StatsModel();
         JTable table = new JTable(model);
+
         table.setFont(table.getFont().deriveFont(11.75f));
         JScrollPane tablePanel = new JScrollPane(table);
         tablePanel.setBorder(BorderFactory.createTitledBorder("boards stats"));
         mainSplitPane.setTopComponent(tablePanel);
         boardModel = new BoardModel();
-        JTable boardTable = new JTable(boardModel);
+        boardTable = new JTable(boardModel);
+        boardTable.addMouseListener(new MouseAdapter() {
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2) {
+                    JTable target = (JTable) e.getSource();
+                    int row = target.getSelectedRow();
+                    int column = target.getSelectedColumn();
+                    if (column == 0) {
+                        BoardView view = new BoardView();
+                        mainSplitPane.setBottomComponent(view);
+                    } else if (column == 1) {
+                        UserView view = new UserView(new User());
+                        mainSplitPane.setBottomComponent(view);
+                    }
+                }
+            }
+        });
         mainSplitPane.setBottomComponent(new JScrollPane(boardTable));
-        mainSplitPane.setDividerLocation(80);
+        mainSplitPane.setDividerLocation(100);
         add(mainSplitPane, BorderLayout.CENTER);
     }
 
