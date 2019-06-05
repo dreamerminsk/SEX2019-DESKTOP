@@ -23,7 +23,10 @@ import org.pushingpixels.substance.api.skin.SubstanceCremeLookAndFeel;
 import javax.swing.*;
 import javax.swing.text.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -165,37 +168,6 @@ public class UserUpdater extends JFrame {
     private void init() {
 
         initMenu();
-
-        JToolBar toolbar = new JToolBar();
-
-        JTextField searchField = new JTextField();
-        searchField.setComponentPopupMenu(menu);
-        searchField.addKeyListener(new KeyListener() {
-            @Override
-            public void keyTyped(KeyEvent e) {
-
-            }
-
-            @Override
-            public void keyPressed(KeyEvent e) {
-                if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-                    //process(searchField.getText());
-                }
-            }
-
-            @Override
-            public void keyReleased(KeyEvent e) {
-
-            }
-        });
-
-        toolbar.add(searchField);
-
-        JButton processButton = new JButton("process");
-        //processButton.addActionListener(e -> process(searchField.getText()));
-        toolbar.add(processButton);
-
-        add(toolbar, BorderLayout.NORTH);
 
         JSplitPane mainSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
 
