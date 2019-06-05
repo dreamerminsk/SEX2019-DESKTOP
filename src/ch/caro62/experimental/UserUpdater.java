@@ -9,7 +9,6 @@ import ch.caro62.parser.BoardListParser;
 import ch.caro62.ui.BoardModel;
 import ch.caro62.ui.StatsModel;
 import ch.caro62.utils.RxUtils;
-import com.alee.utils.SystemUtils;
 import com.j256.ormlite.dao.Dao;
 import io.reactivex.Flowable;
 import io.reactivex.disposables.Disposable;
@@ -50,7 +49,6 @@ public class UserUpdater extends JFrame {
 
     public UserUpdater() {
         super("UserUpdater");
-        JOptionPane.showMessageDialog(this.rootPane, SystemUtils.getOsName());
         init();
         setSize(800, 600);
         setLocationRelativeTo(null);
