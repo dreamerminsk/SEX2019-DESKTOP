@@ -183,12 +183,14 @@ public class UserUpdater extends JFrame {
                     JTable target = (JTable) e.getSource();
                     int row = target.getSelectedRow();
                     int column = target.getSelectedColumn();
-                    JOptionPane.showMessageDialog(table, boardModel.getValueAt(row, column));
+                    JOptionPane.showMessageDialog(
+                            UserUpdater.this,
+                            boardModel.getValueAt(row, column));
                 }
             }
         });
         mainSplitPane.setBottomComponent(new JScrollPane(boardTable));
-        mainSplitPane.setDividerLocation(80);
+        mainSplitPane.setDividerLocation(100);
         add(mainSplitPane, BorderLayout.CENTER);
     }
 
