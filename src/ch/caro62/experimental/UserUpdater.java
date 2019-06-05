@@ -23,10 +23,7 @@ import org.pushingpixels.substance.api.skin.SubstanceCremeLookAndFeel;
 import javax.swing.*;
 import javax.swing.text.*;
 import java.awt.*;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.awt.event.*;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -152,7 +149,7 @@ public class UserUpdater extends JFrame {
                     //        ", " + board.getFollowerCount() + " /\r\n", NewItemColor);
                     //appendToPane(textArea, "\t" + board.getRef() + "\r\n", NewItemColor);
                 } else {
-                    model.addBoard(board.getPinCount(), board.getFollowerCount());
+                    model.addExistingBoard(board.getPinCount(), board.getFollowerCount());
                     boardModel.addBoard(board);
                     //appendToPane(textArea, board.getTitle() + " / " + board.getPinCount() +
                     //        ", " + board.getFollowerCount() + " /\r\n", OldItemColor);
@@ -175,12 +172,23 @@ public class UserUpdater extends JFrame {
         textArea.setComponentPopupMenu(menu);
         model = new StatsModel();
         JTable table = new JTable(model);
+
         table.setFont(table.getFont().deriveFont(11.75f));
         JScrollPane tablePanel = new JScrollPane(table);
         tablePanel.setBorder(BorderFactory.createTitledBorder("boards stats"));
         mainSplitPane.setTopComponent(tablePanel);
         boardModel = new BoardModel();
         JTable boardTable = new JTable(boardModel);
+        boardTable.addMouseListener(new MouseAdapter() {
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2) {
+                    JTable target = (JTable) e.getSource();
+                    int row = target.getSelectedRow();
+                    int column = target.getSelectedColumn();
+                    JOptionPane.showMessageDialog(table, boardModel.getValueAt(row, column));
+                }
+            }
+        });
         mainSplitPane.setBottomComponent(new JScrollPane(boardTable));
         mainSplitPane.setDividerLocation(80);
         add(mainSplitPane, BorderLayout.CENTER);
