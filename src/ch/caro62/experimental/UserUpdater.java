@@ -188,6 +188,9 @@ public class UserUpdater extends JFrame {
                     int column = target.getSelectedColumn();
                     if (column == 0) {
                         BoardView view = new BoardView();
+                        view.addBackListener((event) -> {
+                            mainSplitPane.setBottomComponent(new JScrollPane(boardTable));
+                        });
                         mainSplitPane.setBottomComponent(view);
                     } else if (column == 1) {
                         UserView view = new UserView(new User());
