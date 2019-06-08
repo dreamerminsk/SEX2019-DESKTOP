@@ -22,6 +22,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static java.lang.System.out;
+import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER;
+import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED;
 
 public class UserView extends JPanel {
 
@@ -52,23 +54,24 @@ public class UserView extends JPanel {
 
         c.gridx = 0;
         c.gridy = 0;
-        c.anchor = GridBagConstraints.LINE_START;
+        c.anchor = GridBagConstraints.PAGE_START;
         c.weightx = 0.0;
-        c.weighty = 0.0;
+        c.weighty = 1.0;
         c.insets = new Insets(5, 5, 5, 5);
         c.fill = GridBagConstraints.NONE;
+        c.gridheight = 2;
         userAvatar = new JLabel();
         userAvatar.setBorder(BorderFactory.createTitledBorder(user.getName()));
         userDetails.add(userAvatar, c);
         getBufferedImage(user).subscribe(pic -> userAvatar.setIcon(new ImageIcon(pic)));
 
-        c.gridx = 0;
-        c.gridy = 1;
-        c.anchor = GridBagConstraints.LINE_START;
-        c.weightx = 0.0;
-        c.weighty = 1.0;
-        c.fill = GridBagConstraints.HORIZONTAL;
-        userDetails.add(new JLabel(" "), c);
+        //c.gridx = 0;
+        //c.gridy = 1;
+        //c.anchor = GridBagConstraints.LINE_START;
+        //c.weightx = 0.0;
+        //c.weighty = 1.0;
+        //c.fill = GridBagConstraints.HORIZONTAL;
+        //userDetails.add(new JLabel(" "), c);
 
         c.gridx = 1;
         c.gridy = 0;
@@ -77,6 +80,7 @@ public class UserView extends JPanel {
         c.weighty = 0.0;
         c.insets = new Insets(12, 5, 5, 5);
         c.fill = GridBagConstraints.HORIZONTAL;
+        c.gridheight = 1;
         menuPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         menuPanel.setBorder(BorderFactory.createEtchedBorder());
         menuPanel.add(getCatLabel(user.getBoardCount(), " boards"));
@@ -93,13 +97,15 @@ public class UserView extends JPanel {
         c.weighty = 1.0;
         c.insets = new Insets(5, 5, 5, 5);
         c.fill = GridBagConstraints.BOTH;
-        itemsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        itemsPanel = new JPanel(new ModifiedFlowLayout(FlowLayout.LEFT));
         for (int i = 0; i < user.getBoardCount(); i++) {
-            JPanel itemPanel = new JPanel(new GridBagLayout());
+            JPanel itemPanel = new JPanel(new BorderLayout());
+            itemPanel.add(new JButton(Integer.toString(i)), BorderLayout.CENTER);
             itemPanel.setBorder(BorderFactory.createTitledBorder("board " + i));
             itemsPanel.add(itemPanel);
         }
-        userDetails.add(new JScrollPane(itemsPanel), c);
+        JScrollPane scroll = new JScrollPane(itemsPanel, VERTICAL_SCROLLBAR_AS_NEEDED, HORIZONTAL_SCROLLBAR_NEVER);
+        userDetails.add(scroll, c);
 
 
         add(toolbar, BorderLayout.NORTH);
@@ -144,7 +150,8 @@ public class UserView extends JPanel {
 
             itemsPanel.removeAll();
             for (int i = 0; i < user.getBoardCount(); i++) {
-                JPanel itemPanel = new JPanel(new GridBagLayout());
+                JPanel itemPanel = new JPanel(new BorderLayout());
+                itemPanel.add(new JButton(Integer.toString(i)), BorderLayout.CENTER);
                 itemPanel.setBorder(BorderFactory.createTitledBorder("board " + i));
                 itemsPanel.add(itemPanel);
             }
@@ -177,7 +184,7 @@ public class UserView extends JPanel {
                 .getBytes(imgRef)
                 .map(ImageIO::read)
                 .map(Thumbnails::of)
-                .map(i -> i.size(160, 160))
+                .map(i -> i.size(200, 200))
                 .map(Thumbnails.Builder::asBufferedImage).firstElement();
     }
 
