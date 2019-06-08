@@ -15,8 +15,11 @@ import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
+import java.awt.font.TextAttribute;
 import java.awt.image.BufferedImage;
 import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.Map;
 
 import static java.lang.System.out;
 
@@ -71,14 +74,15 @@ public class UserView extends JPanel {
         c.anchor = GridBagConstraints.FIRST_LINE_START;
         c.weightx = 1.0;
         c.weighty = 0.0;
+        c.insets = new Insets(12, 5, 5, 5);
         c.fill = GridBagConstraints.HORIZONTAL;
         menuPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         menuPanel.setBorder(BorderFactory.createEtchedBorder());
-        menuPanel.add(new JLabel(user.getBoardCount() + " boards"));
-        menuPanel.add(new JLabel(user.getFollowerCount() + " following"));
-        menuPanel.add(new JLabel(user.getPinCount() + " pins"));
-        menuPanel.add(new JLabel(user.getRepinCount() + " repins"));
-        menuPanel.add(new JLabel(user.getLikeCount() + " likes"));
+        menuPanel.add(getCatLabel(user.getBoardCount(), " boards"));
+        menuPanel.add(getCatLabel(user.getFollowerCount(), " following"));
+        menuPanel.add(getCatLabel(user.getPinCount(), " pins"));
+        menuPanel.add(getCatLabel(user.getRepinCount(), " repins"));
+        menuPanel.add(getCatLabel(user.getLikeCount(), " likes"));
         userDetails.add(menuPanel, c);
 
 
@@ -88,6 +92,14 @@ public class UserView extends JPanel {
                 .subscribeOn(Schedulers.io())
                 .observeOn(Schedulers.single())
                 .subscribe(this::updateUI);
+    }
+
+    private JLabel getCatLabel(int boardCount, String s) {
+        JLabel l = new JLabel(boardCount + s);
+        Map<TextAttribute, Integer> fontAttributes = new HashMap<>();
+        fontAttributes.put(TextAttribute.UNDERLINE, TextAttribute.UNDERLINE_ON);
+        l.setFont(l.getFont().deriveFont(fontAttributes));
+        return l;
     }
 
     private Flowable<User> reload(User user) {
@@ -105,11 +117,11 @@ public class UserView extends JPanel {
         SwingUtilities.invokeLater(() -> {
             userLabel.setText(user.getName());
             menuPanel.removeAll();
-            menuPanel.add(new JLabel(user.getBoardCount() + " boards"));
-            menuPanel.add(new JLabel(user.getFollowerCount() + " following"));
-            menuPanel.add(new JLabel(user.getPinCount() + " pins"));
-            menuPanel.add(new JLabel(user.getRepinCount() + " repins"));
-            menuPanel.add(new JLabel(user.getLikeCount() + " likes"));
+            menuPanel.add(getCatLabel(user.getBoardCount(), " boards"));
+            menuPanel.add(getCatLabel(user.getFollowerCount(), " following"));
+            menuPanel.add(getCatLabel(user.getPinCount(), " pins"));
+            menuPanel.add(getCatLabel(user.getRepinCount(), " repins"));
+            menuPanel.add(getCatLabel(user.getLikeCount(), " likes"));
             menuPanel.invalidate();
             menuPanel.revalidate();
             menuPanel.repaint();
