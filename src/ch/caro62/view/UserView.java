@@ -30,6 +30,7 @@ public class UserView extends JPanel {
     private JLabel userAvatar;
     private JPanel menuPanel;
     private JLabel userLabel;
+    private JPanel itemsPanel;
 
     public UserView(User user) {
         super(new BorderLayout());
@@ -85,6 +86,21 @@ public class UserView extends JPanel {
         menuPanel.add(getCatLabel(user.getLikeCount(), " likes"));
         userDetails.add(menuPanel, c);
 
+        c.gridx = 1;
+        c.gridy = 1;
+        c.anchor = GridBagConstraints.FIRST_LINE_START;
+        c.weightx = 1.0;
+        c.weighty = 1.0;
+        c.insets = new Insets(5, 5, 5, 5);
+        c.fill = GridBagConstraints.BOTH;
+        itemsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        for (int i = 0; i < user.getBoardCount(); i++) {
+            JPanel itemPanel = new JPanel(new GridBagLayout());
+            itemPanel.setBorder(BorderFactory.createTitledBorder("board " + i));
+            itemsPanel.add(itemPanel);
+        }
+        userDetails.add(new JScrollPane(itemsPanel), c);
+
 
         add(toolbar, BorderLayout.NORTH);
         add(userDetails, BorderLayout.CENTER);
@@ -125,6 +141,16 @@ public class UserView extends JPanel {
             menuPanel.invalidate();
             menuPanel.revalidate();
             menuPanel.repaint();
+
+            itemsPanel.removeAll();
+            for (int i = 0; i < user.getBoardCount(); i++) {
+                JPanel itemPanel = new JPanel(new GridBagLayout());
+                itemPanel.setBorder(BorderFactory.createTitledBorder("board " + i));
+                itemsPanel.add(itemPanel);
+            }
+            itemsPanel.revalidate();
+            itemsPanel.repaint();
+
             getBufferedImage(user)
                     .subscribeOn(Schedulers.io())
                     .observeOn(Schedulers.single())
