@@ -6,6 +6,7 @@ import ch.caro62.model.ModelSource;
 import ch.caro62.model.User;
 import ch.caro62.model.dao.impl.UserDaoImpl;
 import ch.caro62.parser.BoardListParser;
+import ch.caro62.parser.UserParser;
 import ch.caro62.ui.BoardModel;
 import ch.caro62.ui.StatsModel;
 import ch.caro62.utils.RxUtils;
@@ -19,7 +20,7 @@ import org.joda.time.Period;
 import org.jsoup.Connection;
 import org.jsoup.nodes.Document;
 import org.pushingpixels.substance.api.SubstanceLookAndFeel;
-import org.pushingpixels.substance.api.skin.SubstanceCremeLookAndFeel;
+import org.pushingpixels.substance.api.skin.SubstanceCremeCoffeeLookAndFeel;
 
 import javax.swing.*;
 import javax.swing.text.*;
@@ -72,6 +73,10 @@ public class UserUpdater extends JFrame {
                     return dao.getRandom();
                 })
                 .doOnNext((item) -> currentUser.set(item.getRef()))
+                .map(u -> String.format("https://sex.com/user/%s/", u.getRef()))
+                .flatMap(UserUpdater::getPageAsync)
+                .flatMap(UserParser::parse)
+                .doOnNext(this::saveUser)
                 .flatMap((u) -> boards(String.format("https://sex.com/user/%s/", u.getRef()))
                         .mergeWith(boards(String.format("https://sex.com/user/%s/following/", u.getRef()))))
                 .repeat()
@@ -83,7 +88,7 @@ public class UserUpdater extends JFrame {
 
     public static void main(String... args) {
         try {
-            UIManager.setLookAndFeel(new SubstanceCremeLookAndFeel());
+            UIManager.setLookAndFeel(new SubstanceCremeCoffeeLookAndFeel());
             JFrame.setDefaultLookAndFeelDecorated(true);
             JDialog.setDefaultLookAndFeelDecorated(true);
             UIManager.put(SubstanceLookAndFeel.SHOW_EXTRA_WIDGETS, Boolean.TRUE);
@@ -132,6 +137,11 @@ public class UserUpdater extends JFrame {
                 .doOnError(e -> System.out.println(e.getMessage()));
     }
 
+    private void saveUser(User u) throws SQLException {
+        Dao<User, String> userDao = ModelSource.getUserDAO();
+        userDao.createOrUpdate(u);
+    }
+
     private void saveBoardList(BoardListPage blp) throws SQLException {
         Dao<Board, String> boardDAO = ModelSource.getBoardDAO();
         Dao<User, String> userDao = ModelSource.getUserDAO();
@@ -146,15 +156,9 @@ public class UserUpdater extends JFrame {
                 if (res.isCreated()) {
                     model.addNewBoard(board.getPinCount(), board.getFollowerCount());
                     boardModel.addBoard(board);
-                    //appendToPane(textArea, board.getTitle() + " / " + board.getPinCount() +
-                    //        ", " + board.getFollowerCount() + " /\r\n", NewItemColor);
-                    //appendToPane(textArea, "\t" + board.getRef() + "\r\n", NewItemColor);
                 } else {
                     model.addExistingBoard(board.getPinCount(), board.getFollowerCount());
                     boardModel.addBoard(board);
-                    //appendToPane(textArea, board.getTitle() + " / " + board.getPinCount() +
-                    //        ", " + board.getFollowerCount() + " /\r\n", OldItemColor);
-                    //appendToPane(textArea, "\t" + board.getRef() + "\r\n", OldItemColor);
 
                 }
             } catch (SQLException e) {
@@ -190,11 +194,28 @@ public class UserUpdater extends JFrame {
                         BoardView view = new BoardView();
                         view.addBackListener((event) -> {
                             mainSplitPane.setBottomComponent(new JScrollPane(boardTable));
+                            mainSplitPane.setDividerLocation(100);
                         });
                         mainSplitPane.setBottomComponent(view);
+                        mainSplitPane.setDividerLocation(100);
                     } else if (column == 1) {
-                        UserView view = new UserView(new User());
-                        mainSplitPane.setBottomComponent(view);
+                        Dao<User, String> userDao = null;
+                        try {
+                            userDao = ModelSource.getUserDAO();
+                            User user = userDao.queryBuilder()
+                                    .where().eq("ref", target.getValueAt(row, column))
+                                    .queryForFirst();
+                            UserView view = new UserView(user);
+                            view.addBackListener((event) -> {
+                                mainSplitPane.setBottomComponent(new JScrollPane(boardTable));
+                                mainSplitPane.setDividerLocation(100);
+                            });
+                            mainSplitPane.setBottomComponent(view);
+                            mainSplitPane.setDividerLocation(100);
+                        } catch (SQLException ex) {
+                            ex.printStackTrace();
+                        }
+
                     }
                 }
             }
