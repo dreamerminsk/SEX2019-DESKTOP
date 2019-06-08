@@ -26,6 +26,7 @@ public class UserView extends JPanel {
     private JLabel userName;
     private JLabel userAvatar;
     private JPanel menuPanel;
+    private JLabel userLabel;
 
     public UserView(User user) {
         super(new BorderLayout());
@@ -38,34 +39,27 @@ public class UserView extends JPanel {
         buttonPrev = new JButton("<");
         toolbar.add(buttonPrev);
 
-        JLabel userLabel = new JLabel(user.getName());
+        userLabel = new JLabel(user.getName());
         toolbar.addSeparator(new Dimension(12, 12));
         toolbar.add(userLabel);
 
         JPanel userDetails = new JPanel(new GridBagLayout());
         GridBagConstraints c = new GridBagConstraints();
+
         c.gridx = 0;
         c.gridy = 0;
         c.anchor = GridBagConstraints.LINE_START;
         c.weightx = 0.0;
         c.weighty = 0.0;
         c.insets = new Insets(5, 5, 5, 5);
-        c.fill = GridBagConstraints.HORIZONTAL;
-        userName = new JLabel(user.getName());
-        userDetails.add(userName, c);
-
-        c.gridx = 0;
-        c.gridy = 1;
-        c.anchor = GridBagConstraints.LINE_START;
-        c.weightx = 0.0;
-        c.weighty = 0.0;
         c.fill = GridBagConstraints.NONE;
         userAvatar = new JLabel();
+        userAvatar.setBorder(BorderFactory.createTitledBorder(user.getName()));
         userDetails.add(userAvatar, c);
         getBufferedImage(user).subscribe(pic -> userAvatar.setIcon(new ImageIcon(pic)));
 
         c.gridx = 0;
-        c.gridy = 3;
+        c.gridy = 1;
         c.anchor = GridBagConstraints.LINE_START;
         c.weightx = 0.0;
         c.weighty = 1.0;
@@ -81,6 +75,10 @@ public class UserView extends JPanel {
         menuPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         menuPanel.setBorder(BorderFactory.createEtchedBorder());
         menuPanel.add(new JLabel(user.getBoardCount() + " boards"));
+        menuPanel.add(new JLabel(user.getFollowerCount() + " following"));
+        menuPanel.add(new JLabel(user.getPinCount() + " pins"));
+        menuPanel.add(new JLabel(user.getRepinCount() + " repins"));
+        menuPanel.add(new JLabel(user.getLikeCount() + " likes"));
         userDetails.add(menuPanel, c);
 
 
@@ -105,7 +103,7 @@ public class UserView extends JPanel {
 
     private void updateUI(User user) {
         SwingUtilities.invokeLater(() -> {
-            userName.setText(user.getName());
+            userLabel.setText(user.getName());
             menuPanel.removeAll();
             menuPanel.add(new JLabel(user.getBoardCount() + " boards"));
             menuPanel.add(new JLabel(user.getFollowerCount() + " following"));
@@ -119,8 +117,10 @@ public class UserView extends JPanel {
                     .subscribeOn(Schedulers.io())
                     .observeOn(Schedulers.single())
                     .subscribe(pic -> {
-                        userAvatar.setIcon(new ImageIcon(pic));
-                        userAvatar.setBorder(BorderFactory.createTitledBorder(user.getName()));
+                        SwingUtilities.invokeLater(() -> {
+                            userAvatar.setIcon(new ImageIcon(pic));
+                            userAvatar.setBorder(BorderFactory.createTitledBorder(user.getName()));
+                        });
                     });
         });
     }
