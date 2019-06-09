@@ -16,4 +16,13 @@ public class NumberUtils {
                 .blockingGet();
     }
 
+    public static Long extractNumberWithZeroes(String value) {
+        return StringObservable
+                .characters(value)
+                .filter(Character::isDigit)
+                .map((d) -> d - ZERO_CODE)
+                .reduce(0L, (x, y) -> 10L * x + y)
+                .blockingGet();
+    }
+
 }

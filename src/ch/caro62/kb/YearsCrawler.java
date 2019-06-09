@@ -1,10 +1,13 @@
 package ch.caro62.kb;
 
+import ch.caro62.kb.model.Models;
+import ch.caro62.kb.parser.YearsParser;
 import io.reactivex.Flowable;
 import okhttp3.*;
 import org.jsoup.Jsoup;
 
 import java.io.File;
+import java.sql.SQLException;
 
 public class YearsCrawler {
 
@@ -12,10 +15,13 @@ public class YearsCrawler {
             .cache(new Cache(new File("cache"), 10 * 1024 * 1024))
             .connectionPool(new ConnectionPool()).build();
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws SQLException {
+        Models.createTables();
         getHtml("https://www.kinobusiness.com/kassovye_sbory/films_year/")
                 .map(Jsoup::parse)
-                .subscribe(System.out::println);
+                .flatMap(YearsParser::parse)
+                .doOnNext(Models::saveYears)
+                .blockingSubscribe();
     }
 
     private static Flowable<String> getHtml(String ref) {
