@@ -1,7 +1,9 @@
 package ch.caro62.view;
 
+import ch.caro62.model.Board;
 import ch.caro62.model.ModelSource;
 import ch.caro62.model.User;
+import ch.caro62.parser.BoardListParser;
 import ch.caro62.parser.UserParser;
 import ch.caro62.service.ImageLoader;
 import com.j256.ormlite.dao.Dao;
@@ -27,6 +29,8 @@ import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED;
 
 public class UserView extends JPanel {
 
+    private User currentUser;
+
     private JButton buttonPrev;
     private JLabel userName;
     private JLabel userAvatar;
@@ -36,6 +40,7 @@ public class UserView extends JPanel {
 
     public UserView(User user) {
         super(new BorderLayout());
+        this.currentUser = user;
         init(user);
     }
 
@@ -98,12 +103,13 @@ public class UserView extends JPanel {
         c.insets = new Insets(5, 5, 5, 5);
         c.fill = GridBagConstraints.BOTH;
         itemsPanel = new JPanel(new ModifiedFlowLayout(FlowLayout.LEFT));
-        for (int i = 0; i < user.getBoardCount(); i++) {
-            JPanel itemPanel = new JPanel(new BorderLayout());
-            itemPanel.add(new JButton(Integer.toString(i)), BorderLayout.CENTER);
-            itemPanel.setBorder(BorderFactory.createTitledBorder("board " + i));
-            itemsPanel.add(itemPanel);
-        }
+        loadBoards(1)
+                .subscribe(board -> {
+                    JPanel itemPanel = new JPanel(new BorderLayout());
+                    itemPanel.add(new JButton(board.getTitle()), BorderLayout.CENTER);
+                    itemPanel.setBorder(BorderFactory.createTitledBorder(board.getTitle()));
+                    itemsPanel.add(itemPanel);
+                });
         JScrollPane scroll = new JScrollPane(itemsPanel, VERTICAL_SCROLLBAR_AS_NEEDED, HORIZONTAL_SCROLLBAR_NEVER);
         userDetails.add(scroll, c);
 
@@ -118,9 +124,13 @@ public class UserView extends JPanel {
 
     private JLabel getCatLabel(int boardCount, String s) {
         JLabel l = new JLabel(boardCount + s);
+
         Map<TextAttribute, Integer> fontAttributes = new HashMap<>();
         fontAttributes.put(TextAttribute.UNDERLINE, TextAttribute.UNDERLINE_ON);
         l.setFont(l.getFont().deriveFont(fontAttributes));
+
+        l.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
         return l;
     }
 
@@ -149,12 +159,13 @@ public class UserView extends JPanel {
             menuPanel.repaint();
 
             itemsPanel.removeAll();
-            for (int i = 0; i < user.getBoardCount(); i++) {
-                JPanel itemPanel = new JPanel(new BorderLayout());
-                itemPanel.add(new JButton(Integer.toString(i)), BorderLayout.CENTER);
-                itemPanel.setBorder(BorderFactory.createTitledBorder("board " + i));
-                itemsPanel.add(itemPanel);
-            }
+            loadBoards(1)
+                    .subscribe(board -> {
+                        JPanel itemPanel = new JPanel(new BorderLayout());
+                        itemPanel.add(new JButton(board.getTitle()), BorderLayout.CENTER);
+                        itemPanel.setBorder(BorderFactory.createTitledBorder(board.getTitle()));
+                        itemsPanel.add(itemPanel);
+                    });
             itemsPanel.revalidate();
             itemsPanel.repaint();
 
@@ -168,6 +179,17 @@ public class UserView extends JPanel {
                         });
                     });
         });
+    }
+
+    private Flowable<Board> loadBoards(int page) {
+        return Flowable.just(currentUser.getAbsRef())
+                .subscribeOn(Schedulers.io())
+                .observeOn(Schedulers.single())
+                .flatMap(ImageLoader::getString)
+                .map(Jsoup::parse)
+                .flatMap(BoardListParser::parse)
+                .flatMap(blp -> Flowable.fromIterable(blp.getBoards()));
+
     }
 
     private void saveUser(User u) throws SQLException {
