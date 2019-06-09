@@ -126,7 +126,7 @@ public class UserView extends JPanel {
 
     private Flowable<User> reload(User user) {
         return Flowable.just(user)
-                .map(u -> String.format("https://sex.com/user/%s/", u.getRef()))
+                .map(User::getAbsRef)
                 .flatMap(ImageLoader::getString)
                 .map(Jsoup::parse)
                 .flatMap(UserParser::parse)

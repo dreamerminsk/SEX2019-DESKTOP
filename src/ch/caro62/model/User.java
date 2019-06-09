@@ -43,6 +43,10 @@ public class User {
         return ref;
     }
 
+    public String getAbsRef() {
+        return String.format("https://sex.com/user/%s/", getRef());
+    }
+
     public void setRef(String ref) {
         this.ref = ref;
     }
