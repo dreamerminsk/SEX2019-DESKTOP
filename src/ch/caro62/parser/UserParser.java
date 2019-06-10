@@ -16,9 +16,6 @@ public class UserParser {
             user.setName(ref.text().trim());
         }
 
-        String[] locItems = doc.location().split("/");
-        user.setRef(locItems[locItems.length - 1]);
-
         for (Element ref : userBox.select("div.user_profile_picture img")) {
             user.setAvatar(ref.attr("abs:src"));
         }
@@ -29,9 +26,12 @@ public class UserParser {
 
         Element boardBox = doc.selectFirst("div.create_board_box");
 
-        for (Element ref : boardBox.select("li")) {
+        for (Element ref : boardBox.select("li a")) {
             Integer count = NumberUtils.extractNumber(ref.text());
             if (ref.text().contains("Boards")) {
+                String[] locItems = ref.attr("href").split("/");
+                System.out.println(ref.attr("href") + ", " + ref.text());
+                user.setRef(locItems[locItems.length - 1]);
                 user.setBoardCount(count);
             } else if (ref.text().contains("Following")) {
                 user.setFollowerCount(count);

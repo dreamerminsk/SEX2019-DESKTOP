@@ -4,6 +4,9 @@ import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
 
 import java.text.MessageFormat;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 @DatabaseTable(tableName = "sexBoards")
 public class Board {
@@ -22,6 +25,8 @@ public class Board {
 
     @DatabaseField
     private int followerCount = 0;
+
+    private List<String> pins = new ArrayList<>();
 
     public Board() {
 
@@ -69,5 +74,14 @@ public class Board {
 
     public void setUser(String user) {
         this.user = user;
+    }
+
+    public List<String> getPins() {
+        return Collections.unmodifiableList(pins);
+    }
+
+    public void setPins(List<String> pins) {
+        this.pins.clear();
+        this.pins.addAll(pins);
     }
 }

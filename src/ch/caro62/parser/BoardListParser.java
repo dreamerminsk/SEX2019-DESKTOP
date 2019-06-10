@@ -36,6 +36,11 @@ public class BoardListParser {
                 Integer count = NumberUtils.extractNumber(ref.text());
                 board.setPinCount(count);
             }
+            ArrayList<String> imgs = new ArrayList<String>();
+            for (Element ref : box.select("div.board-thumbs div.board-thumb img")) {
+                imgs.add(ref.attr("abs:src"));
+            }
+            board.setPins(imgs);
             list.add(board);
         }
         boardListPage.setBoards(list);

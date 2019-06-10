@@ -23,6 +23,7 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
+import static java.awt.image.BufferedImage.TYPE_INT_RGB;
 import static java.lang.System.out;
 import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER;
 import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED;
@@ -103,13 +104,15 @@ public class UserView extends JPanel {
         c.insets = new Insets(5, 5, 5, 5);
         c.fill = GridBagConstraints.BOTH;
         itemsPanel = new JPanel(new ModifiedFlowLayout(FlowLayout.LEFT));
-        loadBoards(1)
-                .subscribe(board -> {
-                    JPanel itemPanel = new JPanel(new BorderLayout());
-                    itemPanel.add(new JButton(board.getTitle()), BorderLayout.CENTER);
-                    itemPanel.setBorder(BorderFactory.createTitledBorder(board.getTitle()));
-                    itemsPanel.add(itemPanel);
-                });
+//        loadBoards(1)
+//                .subscribe(board -> {
+//                    SwingUtilities.invokeLater(() -> {
+//                        JPanel itemPanel = new JPanel(new BorderLayout());
+//                        itemPanel.add(new JButton(board.getTitle()), BorderLayout.CENTER);
+//                        itemPanel.setBorder(BorderFactory.createTitledBorder(board.getTitle()));
+//                        itemsPanel.add(itemPanel);
+//                    });
+//                });
         JScrollPane scroll = new JScrollPane(itemsPanel, VERTICAL_SCROLLBAR_AS_NEEDED, HORIZONTAL_SCROLLBAR_NEVER);
         userDetails.add(scroll, c);
 
@@ -160,14 +163,31 @@ public class UserView extends JPanel {
 
             itemsPanel.removeAll();
             loadBoards(1)
-                    .subscribe(board -> {
-                        JPanel itemPanel = new JPanel(new BorderLayout());
-                        itemPanel.add(new JButton(board.getTitle()), BorderLayout.CENTER);
-                        itemPanel.setBorder(BorderFactory.createTitledBorder(board.getTitle()));
-                        itemsPanel.add(itemPanel);
-                    });
-            itemsPanel.revalidate();
-            itemsPanel.repaint();
+                    .subscribe(board -> SwingUtilities.invokeLater(() -> {
+                                JPanel itemPanel = new JPanel(new BorderLayout());
+                                itemPanel.setMinimumSize(new Dimension(100, 30));
+                                JLabel imgLabel = new JLabel(new ImageIcon(createPic()));
+                                itemPanel.add(imgLabel, BorderLayout.CENTER);
+                                itemPanel.setBorder(BorderFactory.createTitledBorder(board.getTitle()));
+                                itemsPanel.add(itemPanel);
+                                ImageLoader
+                                        .getBytes(board.getPins().get(0))
+                                        .map(ImageIO::read)
+                                        .map(Thumbnails::of)
+                                        .map(i -> i.size(100, 100))
+                                        .map(Thumbnails.Builder::asBufferedImage)
+                                        .onErrorReturnItem(createPic())
+                                        .subscribeOn(Schedulers.io())
+                                        .observeOn(Schedulers.single())
+                                        .subscribe((image) -> SwingUtilities.invokeLater(() -> imgLabel.setIcon(new ImageIcon(image))));
+
+                            }),
+                            throwable -> System.out.println(throwable.getMessage()),
+                            () -> {
+                                itemsPanel.revalidate();
+                                itemsPanel.repaint();
+                            });
+
 
             getBufferedImage(user)
                     .subscribeOn(Schedulers.io())
@@ -181,20 +201,32 @@ public class UserView extends JPanel {
         });
     }
 
+    private BufferedImage createPic() {
+        BufferedImage img = new BufferedImage(100, 100, TYPE_INT_RGB);
+        Graphics2D g = img.createGraphics();
+        g.setBackground(Color.black);
+        return img;
+    }
+
     private Flowable<Board> loadBoards(int page) {
         return Flowable.just(currentUser.getAbsRef())
                 .subscribeOn(Schedulers.io())
                 .observeOn(Schedulers.single())
                 .flatMap(ImageLoader::getString)
+                .doOnNext((str) -> System.out.println(str.length()))
                 .map(Jsoup::parse)
                 .flatMap(BoardListParser::parse)
-                .flatMap(blp -> Flowable.fromIterable(blp.getBoards()));
+                .doOnNext(blp -> System.out.println(blp.getBoards().size()))
+                .flatMap(blp -> Flowable.fromIterable(blp.getBoards()))
+                .doOnError(System.out::println);
 
     }
 
     private void saveUser(User u) throws SQLException {
         Dao<User, String> userDao = ModelSource.getUserDAO();
-        userDao.createOrUpdate(u);
+        System.out.println(u.getRef());
+        Dao.CreateOrUpdateStatus r = userDao.createOrUpdate(u);
+        out.println(r.isCreated() + ", " + r.isUpdated() + ", " + r.getNumLinesChanged());
     }
 
     private Maybe<BufferedImage> getBufferedImage(User user) {

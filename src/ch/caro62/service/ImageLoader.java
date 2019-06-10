@@ -1,5 +1,6 @@
 package ch.caro62.service;
 
+import com.google.common.util.concurrent.RateLimiter;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
 import okhttp3.Cache;
@@ -13,6 +14,8 @@ import java.io.InputStream;
 
 public class ImageLoader {
 
+    private static final RateLimiter LIMITER = RateLimiter.create(1000);
+
     private static final Cache cache = new Cache(new File("cache"), 10 * 1024 * 1024);
 
     private static final OkHttpClient ok = new OkHttpClient.Builder()
@@ -20,6 +23,8 @@ public class ImageLoader {
             .build();
 
     public static Flowable<InputStream> getBytes(String ref) {
+        LIMITER.acquire(400);
+        System.out.println("getBytes(\"" + ref + "\")");
         Request request = new Request.Builder()
                 .url(ref)
                 .build();

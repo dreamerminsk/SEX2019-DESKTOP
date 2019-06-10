@@ -77,8 +77,8 @@ public class UserUpdater extends JFrame {
                 .flatMap(UserUpdater::getPageAsync)
                 .flatMap(UserParser::parse)
                 .doOnNext(this::saveUser)
-                .flatMap((u) -> boards(String.format("https://sex.com/user/%s/", u.getRef()))
-                        .mergeWith(boards(String.format("https://sex.com/user/%s/following/", u.getRef()))))
+                .flatMap((u) -> boards(u.getAbsRef())
+                        .mergeWith(boards(u.getAbsRef() + "following/")))
                 .repeat()
                 .doOnError((e) -> System.out.println(e.getLocalizedMessage()))
                 .retry()
@@ -105,6 +105,7 @@ public class UserUpdater extends JFrame {
     }
 
     private static Document getPage(String ref) throws IOException {
+        System.out.println(ref);
         Connection conn = connect(ref);
         try {
             return conn.get();
@@ -138,6 +139,7 @@ public class UserUpdater extends JFrame {
     }
 
     private void saveUser(User u) throws SQLException {
+        System.out.println(u.getRef() + ", " + u.getName());
         Dao<User, String> userDao = ModelSource.getUserDAO();
         userDao.createOrUpdate(u);
     }

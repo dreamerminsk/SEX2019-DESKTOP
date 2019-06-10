@@ -18,11 +18,11 @@ public class Models {
         TableUtils.createTableIfNotExists(getConnectionSource(), Years.class);
     }
 
-    public static Dao<Movie, Integer> getMovieDAO() throws SQLException {
+    private static Dao<Movie, Integer> getMovieDAO() throws SQLException {
         return DaoManager.createDao(getConnectionSource(), Movie.class);
     }
 
-    public static Dao<Years, Integer> getYearsDAO() throws SQLException {
+    private static Dao<Years, Integer> getYearsDAO() throws SQLException {
         return DaoManager.createDao(getConnectionSource(), Years.class);
     }
 
