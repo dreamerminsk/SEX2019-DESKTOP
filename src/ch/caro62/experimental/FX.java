@@ -3,20 +3,31 @@ package ch.caro62.experimental;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
-import javafx.scene.layout.FlowPane;
+import javafx.scene.control.ToolBar;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 public class FX extends Application {
+    public static void main(String[] args) {
+        launch(args);
+    }
+
     @Override
     public void start(Stage primaryStage) throws Exception {
-        FlowPane panel = new FlowPane();
-        panel.setHgap(5.0);
-        panel.setVgap(4.0);
-        for (int i = 0; i < 5; i++) {
-            Button b = new Button("b" + i);
-            panel.getChildren().add(b);
-        }
-        Scene scene = new Scene(panel, 600, 400);
+        primaryStage.setTitle("JavaFX App");
+
+        ToolBar toolBar = new ToolBar();
+
+        Button button1 = new Button("Button 1");
+        toolBar.getItems().add(button1);
+
+        Button button2 = new Button("Button 2");
+        toolBar.getItems().add(button2);
+
+        VBox vBox = new VBox(toolBar);
+
+        Scene scene = new Scene(vBox, 960, 600);
+
         primaryStage.setScene(scene);
         primaryStage.show();
     }
