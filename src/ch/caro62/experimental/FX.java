@@ -12,9 +12,9 @@ public class FX extends Application {
         FlowPane panel = new FlowPane();
         panel.setHgap(5.0);
         panel.setVgap(4.0);
-        for (int i =0; i<5; i++) {
+        for (int i = 0; i < 5; i++) {
             Button b = new Button("b" + i);
-                panel.getChildren().add(b);
+            panel.getChildren().add(b);
         }
         Scene scene = new Scene(panel, 600, 400);
         primaryStage.setScene(scene);
