@@ -35,6 +35,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static ch.caro62.utils.DateTimeUtils.daysHoursMinutes;
+import static javax.swing.JFrame.EXIT_ON_CLOSE;
 import static org.jsoup.Jsoup.connect;
 
 public class UserUpdater extends JFrame {
@@ -57,7 +58,7 @@ public class UserUpdater extends JFrame {
         setSize(800, 600);
         setLocationRelativeTo(null);
         setVisible(true);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
         this.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
