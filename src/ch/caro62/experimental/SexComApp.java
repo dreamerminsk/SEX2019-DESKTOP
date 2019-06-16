@@ -19,6 +19,7 @@ import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
@@ -180,7 +181,9 @@ public class SexComApp extends Application {
             //pi.visibleProperty().bind(img.getImage().progressProperty().lessThan(1.0));
 
             StackPane box = new StackPane();
+            StackPane.setAlignment(boards, Pos.BOTTOM_CENTER);
             box.getChildren().addAll(img, pi, boards);
+
 
             VBox vbox = new VBox();
             vbox.getChildren().add(box);
