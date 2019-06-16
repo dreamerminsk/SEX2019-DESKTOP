@@ -28,7 +28,7 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-public class FX extends Application {
+public class SexComApp extends Application {
     private ObservableList<User> userList;
     private LoadingCache<String, Image> IMAGE_CACHE = CacheBuilder.newBuilder()
             .concurrencyLevel(10)
