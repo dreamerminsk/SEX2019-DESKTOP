@@ -3,14 +3,12 @@ package ch.caro62.service;
 import com.google.common.util.concurrent.RateLimiter;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
-import okhttp3.Cache;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
+import okhttp3.*;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.concurrent.TimeUnit;
 
 public class ImageLoader {
 
@@ -47,7 +45,10 @@ public class ImageLoader {
                 .build();
         return Flowable.create(emitter -> {
             try {
-                Response response = ok.newCall(request).execute();
+                LIMITER.acquire(4257);
+                Call call = ok.newCall(request);
+                call.timeout().timeout(64, TimeUnit.SECONDS);
+                Response response = call.execute();
                 emitter.onNext(response.body().string());
                 response.body().close();
                 emitter.onComplete();

@@ -16,8 +16,14 @@ public class UserParser {
             user.setName(ref.text().trim());
         }
 
+        user.setAvatar("https://www.sex.com/images/default_profile_picture.png");
         for (Element ref : userBox.select("div.user_profile_picture img")) {
-            user.setAvatar(ref.attr("abs:src"));
+            String pic = ref.attr("src");
+            if (pic.startsWith("http")) {
+                user.setAvatar(ref.attr("src"));
+            } else {
+                user.setAvatar("https://www.sex.com" + ref.attr("src"));
+            }
         }
 
         for (Element ref : userBox.select("div.description")) {

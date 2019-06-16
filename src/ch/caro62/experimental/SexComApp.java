@@ -14,6 +14,7 @@ import com.j256.ormlite.stmt.QueryBuilder;
 import com.j256.ormlite.stmt.Where;
 import io.reactivex.Flowable;
 import io.reactivex.disposables.Disposable;
+import io.reactivex.schedulers.Schedulers;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
@@ -33,6 +34,7 @@ import org.controlsfx.control.GridView;
 import org.jsoup.Jsoup;
 
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -54,7 +56,8 @@ public class SexComApp extends Application {
                     return new Image(key, true);
                 }
             });
-    private Disposable updater;
+
+    private List<Disposable> updaters = new ArrayList<>();
 
     public static void main(String[] args) {
         launch(args);
@@ -87,10 +90,19 @@ public class SexComApp extends Application {
         grid.setVerticalCellSpacing(4);
         grid.setCellFactory(param -> new UserGridCell());
         userList = FXCollections.observableArrayList();
-        for (int i = 0; i < 12; i++) {
+        for (int i = 0; i < 256; i++) {
             UserDao userDao = (UserDao) ModelSource.getUserDAO();
             userList.add(userDao.getRandom().blockingSingle());
         }
+        Disposable updater = Flowable.fromIterable(userList)
+                .flatMap(user -> ImageLoader.getString(user.getAbsRef()))
+                .flatMap(html -> Flowable.just(Jsoup.parse(html)))
+                .flatMap(UserParser::parse)
+                .doOnError(System.out::println)
+                .subscribeOn(Schedulers.io())
+                .observeOn(Schedulers.single())
+                .subscribe(this::saveUser);
+        updaters.add(updater);
         grid.setItems(userList);
         vBox.setCenter(grid);
 
@@ -114,22 +126,25 @@ public class SexComApp extends Application {
 
     private void search(String newValue) {
         try {
-            updater.dispose();
+            updaters.forEach(Disposable::dispose);
             UserDao userDao = (UserDao) ModelSource.getUserDAO();
             QueryBuilder<User, String> query = userDao.queryBuilder();
             Where<User, String> where = query.where();
             where.like("ref", "%" + newValue + "%");
-            List<User> users = query.limit(32L).query();
+            List<User> users = query.query();
             Platform.runLater(() -> {
                 userList.clear();
                 userList.addAll(users);
             });
-            updater = Flowable.fromIterable(users)
+            Disposable updater = Flowable.fromIterable(users)
                     .flatMap(user -> ImageLoader.getString(user.getAbsRef()))
                     .flatMap(html -> Flowable.just(Jsoup.parse(html)))
                     .flatMap(UserParser::parse)
                     .doOnError(System.out::println)
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(Schedulers.single())
                     .subscribe(this::saveUser);
+            updaters.add(updater);
         } catch (SQLException e) {
             e.printStackTrace();
         }
