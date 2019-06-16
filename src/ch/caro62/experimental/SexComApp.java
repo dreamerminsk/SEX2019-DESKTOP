@@ -90,15 +90,15 @@ public class SexComApp extends Application {
         grid.setVerticalCellSpacing(4);
         grid.setCellFactory(param -> new UserGridCell());
         userList = FXCollections.observableArrayList();
-        for (int i = 0; i < 256; i++) {
-            UserDao userDao = (UserDao) ModelSource.getUserDAO();
-            userList.add(userDao.getRandom().blockingSingle());
-        }
-        Disposable updater = Flowable.fromIterable(userList)
+        UserDao userDao = (UserDao) ModelSource.getUserDAO();
+        Flowable<User> randoms = userDao.getRandom(512);
+
+        Disposable updater = randoms
                 .flatMap(user -> ImageLoader.getString(user.getAbsRef()))
                 .flatMap(html -> Flowable.just(Jsoup.parse(html)))
                 .flatMap(UserParser::parse)
                 .doOnError(System.out::println)
+                .doOnNext(u -> Platform.runLater(() -> userList.add(u)))
                 .subscribeOn(Schedulers.io())
                 .observeOn(Schedulers.single())
                 .subscribe(this::saveUser);
@@ -161,6 +161,7 @@ public class SexComApp extends Application {
         private ImageView img;
         private ProgressIndicator pi;
         private TitledPane userPane;
+        private Hyperlink boards = new Hyperlink();
 
         public UserGridCell() {
             getStyleClass().add("color-grid-cell"); //$NON-NLS-1$
@@ -170,8 +171,8 @@ public class SexComApp extends Application {
 
             img = new ImageView();
 
-            img.setFitHeight(240);
-            img.setFitWidth(240);
+            img.setFitHeight(225);
+            img.setFitWidth(225);
             img.setPreserveRatio(false);
             img.setSmooth(true);
 
@@ -179,10 +180,12 @@ public class SexComApp extends Application {
             //pi.visibleProperty().bind(img.getImage().progressProperty().lessThan(1.0));
 
             StackPane box = new StackPane();
-            box.getChildren().addAll(img, pi);
+            box.getChildren().addAll(img, pi, boards);
 
             VBox vbox = new VBox();
             vbox.getChildren().add(box);
+
+            vbox.getChildren().add(boards);
 
             userPane.setContent(vbox);
             setGraphic(userPane);
@@ -199,6 +202,7 @@ public class SexComApp extends Application {
                 pi.visibleProperty().bind(img.getImage().progressProperty().lessThan(1.0));
                 pi.progressProperty().bind(img.getImage().progressProperty());
                 userPane.setText(item.getRef());
+                boards.setText(item.getBoardCount() + " board(s)");
                 setGraphic(userPane);
             }
         }

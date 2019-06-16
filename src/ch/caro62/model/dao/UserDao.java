@@ -7,4 +7,6 @@ import io.reactivex.Flowable;
 public interface UserDao extends Dao<User, String> {
 
     Flowable<User> getRandom();
+
+    Flowable<User> getRandom(int count);
 }
