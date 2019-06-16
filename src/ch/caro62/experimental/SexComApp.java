@@ -189,7 +189,8 @@ public class SexComApp extends Application {
 
 
             VBox vbox = new VBox();
-            HBox hbox = new HBox();
+            HBox hbox = new HBox(7);
+            hbox.setAlignment(Pos.TOP_CENTER);
             hbox.getChildren().addAll(boards, following);
             vbox.getChildren().add(hbox);
             vbox.getChildren().add(box);
