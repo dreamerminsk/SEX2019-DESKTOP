@@ -3,15 +3,22 @@ package ch.caro62.experimental;
 import ch.caro62.model.ModelSource;
 import ch.caro62.model.User;
 import ch.caro62.model.dao.UserDao;
+import ch.caro62.parser.UserParser;
+import ch.caro62.service.ImageLoader;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
+import com.google.common.cache.CacheStats;
 import com.google.common.cache.LoadingCache;
+import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.stmt.QueryBuilder;
 import com.j256.ormlite.stmt.Where;
+import io.reactivex.Flowable;
+import io.reactivex.disposables.Disposable;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
@@ -19,30 +26,35 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import javafx.scene.text.Text;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
 import org.controlsfx.control.GridCell;
 import org.controlsfx.control.GridView;
+import org.jsoup.Jsoup;
 
 import java.sql.SQLException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public class SexComApp extends Application {
+
     private ObservableList<User> userList;
+
     private LoadingCache<String, Image> IMAGE_CACHE = CacheBuilder.newBuilder()
             .concurrencyLevel(10)
             .expireAfterAccess(5, TimeUnit.MINUTES)
-            .maximumSize(160)
+            .maximumSize(320)
             .recordStats()
             .softValues()
             .weakKeys()
             .build(new CacheLoader<String, Image>() {
                 @Override
                 public Image load(String key) throws Exception {
+                    System.out.println(key);
                     return new Image(key, true);
                 }
             });
+    private Disposable updater;
 
     public static void main(String[] args) {
         launch(args);
@@ -69,8 +81,8 @@ public class SexComApp extends Application {
 
         GridView<User> grid = new GridView<>();
 
-        grid.setCellHeight(250);
-        grid.setCellWidth(250);
+        grid.setCellHeight(280);
+        grid.setCellWidth(280);
         grid.setHorizontalCellSpacing(4);
         grid.setVerticalCellSpacing(4);
         grid.setCellFactory(param -> new UserGridCell());
@@ -85,29 +97,52 @@ public class SexComApp extends Application {
         Scene scene = new Scene(vBox, 960, 600);
 
         primaryStage.setScene(scene);
+
+        Rectangle2D primaryScreenBounds = Screen.getPrimary().getVisualBounds();
+        primaryStage.setWidth(primaryScreenBounds.getWidth() / 3 * 2);
+        primaryStage.setHeight(primaryScreenBounds.getHeight() / 3 * 2);
+
         primaryStage.show();
+    }
+
+    @Override
+    public void stop() throws Exception {
+        CacheStats stats = IMAGE_CACHE.stats();
+        System.out.println(stats);
+        super.stop();
     }
 
     private void search(String newValue) {
         try {
+            updater.dispose();
             UserDao userDao = (UserDao) ModelSource.getUserDAO();
             QueryBuilder<User, String> query = userDao.queryBuilder();
             Where<User, String> where = query.where();
             where.like("ref", "%" + newValue + "%");
-            List<User> users = query.limit(64L).query();
+            List<User> users = query.limit(32L).query();
             Platform.runLater(() -> {
                 userList.clear();
                 userList.addAll(users);
             });
-
+            updater = Flowable.fromIterable(users)
+                    .flatMap(user -> ImageLoader.getString(user.getAbsRef()))
+                    .flatMap(html -> Flowable.just(Jsoup.parse(html)))
+                    .flatMap(UserParser::parse)
+                    .doOnError(System.out::println)
+                    .subscribe(this::saveUser);
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
 
+    private void saveUser(User user) throws SQLException {
+        System.out.println(user.getRef() + ", " + user.getName());
+        Dao<User, String> userDao = ModelSource.getUserDAO();
+        userDao.createOrUpdate(user);
+    }
+
     private class UserGridCell extends GridCell<User> {
 
-        private final Text text;
         private ImageView img;
         private ProgressIndicator pi;
         private TitledPane userPane;
@@ -118,23 +153,21 @@ public class SexComApp extends Application {
             userPane = new TitledPane();
             userPane.setCollapsible(false);
 
-            img = new ImageView(IMAGE_CACHE.getUnchecked("https://www.sex.com/images/default_profile_picture.png"));
+            img = new ImageView();
 
-            img.setFitHeight(160);
-            img.setFitWidth(160);
-            img.setPreserveRatio(true);
+            img.setFitHeight(240);
+            img.setFitWidth(240);
+            img.setPreserveRatio(false);
             img.setSmooth(true);
 
             pi = new ProgressIndicator();
-            pi.visibleProperty().bind(img.getImage().progressProperty().lessThan(1.0));
+            //pi.visibleProperty().bind(img.getImage().progressProperty().lessThan(1.0));
 
             StackPane box = new StackPane();
             box.getChildren().addAll(img, pi);
 
             VBox vbox = new VBox();
             vbox.getChildren().add(box);
-            text = new Text();
-            vbox.getChildren().add(text);
 
             userPane.setContent(vbox);
             setGraphic(userPane);
@@ -149,8 +182,8 @@ public class SexComApp extends Application {
             } else {
                 img.setImage(IMAGE_CACHE.getUnchecked(item.getAvatar()));
                 pi.visibleProperty().bind(img.getImage().progressProperty().lessThan(1.0));
+                pi.progressProperty().bind(img.getImage().progressProperty());
                 userPane.setText(item.getRef());
-                text.setText(item.getRef());
                 setGraphic(userPane);
             }
         }
