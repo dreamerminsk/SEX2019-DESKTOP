@@ -26,6 +26,7 @@ import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Screen;
@@ -102,6 +103,7 @@ public class SexComApp extends Application {
                 .doOnNext(u -> Platform.runLater(() -> userList.add(u)))
                 .subscribeOn(Schedulers.io())
                 .observeOn(Schedulers.single())
+                .retry()
                 .subscribe(this::saveUser);
         updaters.add(updater);
         grid.setItems(userList);
@@ -163,6 +165,7 @@ public class SexComApp extends Application {
         private ProgressIndicator pi;
         private TitledPane userPane;
         private Hyperlink boards = new Hyperlink();
+        private final Hyperlink following = new Hyperlink();
 
         public UserGridCell() {
             getStyleClass().add("color-grid-cell"); //$NON-NLS-1$
@@ -172,8 +175,8 @@ public class SexComApp extends Application {
 
             img = new ImageView();
 
-            img.setFitHeight(225);
-            img.setFitWidth(225);
+            img.setFitHeight(200);
+            img.setFitWidth(200);
             img.setPreserveRatio(false);
             img.setSmooth(true);
 
@@ -181,14 +184,16 @@ public class SexComApp extends Application {
             //pi.visibleProperty().bind(img.getImage().progressProperty().lessThan(1.0));
 
             StackPane box = new StackPane();
-            StackPane.setAlignment(boards, Pos.BOTTOM_CENTER);
+            StackPane.setAlignment(boards, Pos.TOP_RIGHT);
             box.getChildren().addAll(img, pi, boards);
 
 
             VBox vbox = new VBox();
+            HBox hbox = new HBox();
+            hbox.getChildren().addAll(boards, following);
+            vbox.getChildren().add(hbox);
             vbox.getChildren().add(box);
 
-            vbox.getChildren().add(boards);
 
             userPane.setContent(vbox);
             setGraphic(userPane);
@@ -206,6 +211,7 @@ public class SexComApp extends Application {
                 pi.progressProperty().bind(img.getImage().progressProperty());
                 userPane.setText(item.getRef());
                 boards.setText(item.getBoardCount() + " board(s)");
+                following.setText(item.getFollowerCount() + " following");
                 setGraphic(userPane);
             }
         }
