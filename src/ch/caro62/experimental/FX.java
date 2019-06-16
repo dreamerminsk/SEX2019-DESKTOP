@@ -3,6 +3,9 @@ package ch.caro62.experimental;
 import ch.caro62.model.ModelSource;
 import ch.caro62.model.User;
 import ch.caro62.model.dao.UserDao;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.j256.ormlite.stmt.QueryBuilder;
 import com.j256.ormlite.stmt.Where;
 import javafx.application.Application;
@@ -14,16 +17,32 @@ import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.text.Text;
 import javafx.stage.Stage;
 import org.controlsfx.control.GridCell;
 import org.controlsfx.control.GridView;
 
 import java.sql.SQLException;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class FX extends Application {
     private ObservableList<User> userList;
+    private LoadingCache<String, Image> IMAGE_CACHE = CacheBuilder.newBuilder()
+            .concurrencyLevel(10)
+            .expireAfterAccess(5, TimeUnit.MINUTES)
+            .maximumSize(160)
+            .recordStats()
+            .softValues()
+            .weakKeys()
+            .build(new CacheLoader<String, Image>() {
+                @Override
+                public Image load(String key) throws Exception {
+                    return new Image(key, true);
+                }
+            });
 
     public static void main(String[] args) {
         launch(args);
@@ -49,11 +68,12 @@ public class FX extends Application {
         vBox.setTop(toolBar);
 
         GridView<User> grid = new GridView<>();
-        grid.setCellHeight(160);
-        grid.setCellWidth(160);
+
+        grid.setCellHeight(250);
+        grid.setCellWidth(250);
         grid.setHorizontalCellSpacing(4);
         grid.setVerticalCellSpacing(4);
-        grid.setCellFactory(param -> new StringGridCell());
+        grid.setCellFactory(param -> new UserGridCell());
         userList = FXCollections.observableArrayList();
         for (int i = 0; i < 12; i++) {
             UserDao userDao = (UserDao) ModelSource.getUserDAO();
@@ -74,7 +94,7 @@ public class FX extends Application {
             QueryBuilder<User, String> query = userDao.queryBuilder();
             Where<User, String> where = query.where();
             where.like("ref", "%" + newValue + "%");
-            List<User> users = query.limit(16L).query();
+            List<User> users = query.limit(64L).query();
             Platform.runLater(() -> {
                 userList.clear();
                 userList.addAll(users);
@@ -85,44 +105,52 @@ public class FX extends Application {
         }
     }
 
-    private class StringGridCell extends GridCell<User> {
+    private class UserGridCell extends GridCell<User> {
 
-        private final ImageView img;
+        private final Text text;
+        private ImageView img;
+        private ProgressIndicator pi;
         private TitledPane userPane;
 
-        public StringGridCell() {
+        public UserGridCell() {
             getStyleClass().add("color-grid-cell"); //$NON-NLS-1$
 
             userPane = new TitledPane();
+            userPane.setCollapsible(false);
 
-            img = new ImageView();
+            img = new ImageView(IMAGE_CACHE.getUnchecked("https://www.sex.com/images/default_profile_picture.png"));
 
-            img.setImage(new Image("https://st.kp.yandex.net/images/sm_film/1097392.jpg"));
-            VBox box = new VBox();
+            img.setFitHeight(160);
+            img.setFitWidth(160);
+            img.setPreserveRatio(true);
+            img.setSmooth(true);
 
+            pi = new ProgressIndicator();
+            pi.visibleProperty().bind(img.getImage().progressProperty().lessThan(1.0));
 
-            box.getChildren().add(img);
-            box.getChildren().add(new Button("like"));
-            userPane.setContent(box);
+            StackPane box = new StackPane();
+            box.getChildren().addAll(img, pi);
+
+            VBox vbox = new VBox();
+            vbox.getChildren().add(box);
+            text = new Text();
+            vbox.getChildren().add(text);
+
+            userPane.setContent(vbox);
             setGraphic(userPane);
-            this.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
+            setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
         }
 
         @Override
         protected void updateItem(User item, boolean empty) {
             super.updateItem(item, empty);
-
             if (empty) {
                 setGraphic(null);
             } else {
-                if (item.getName() != null) {
-                    userPane.setText(item.getName());
-                } else {
-                    userPane.setText(item.getRef());
-                }
-                if (item.getAvatar() != null) {
-                    img.setImage(new Image(item.getAvatar(), 80, 80, false, false));
-                }
+                img.setImage(IMAGE_CACHE.getUnchecked(item.getAvatar()));
+                pi.visibleProperty().bind(img.getImage().progressProperty().lessThan(1.0));
+                userPane.setText(item.getRef());
+                text.setText(item.getRef());
                 setGraphic(userPane);
             }
         }
