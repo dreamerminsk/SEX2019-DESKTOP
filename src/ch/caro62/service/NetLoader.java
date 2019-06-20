@@ -57,7 +57,7 @@ public class NetLoader {
                 .url(ref)
                 .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.77 Safari/537.36")
                 .build();
-        REQS.add(new RequestInfo(request));
+        final RequestInfo requestInfo = new RequestInfo(request);        
         return Flowable.create(emitter -> {
             Response response = null;
             try {
@@ -68,12 +68,10 @@ public class NetLoader {
                 emitter.onNext(response.body().string());
                 response.body().close();
                 emitter.onComplete();
+                REQS.add(requestInfo);
             } catch (IOException e) {
-                Platform.runLater(() -> {
-                    Alert alert = new Alert(AlertType.ERROR, ref + "\r\n" + e.getMessage(), ButtonType.OK);
-                    alert.showAndWait();
-                });
-
+                requestInfo.exception(e.getClass().getCanonicalName());
+                REQS.add(requestInfo);
                 emitter.onError(e);
             }
         }, BackpressureStrategy.LATEST);

@@ -46,8 +46,7 @@ import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.value.ChangeListener;
+import javafx.beans.binding.Bindings;
 import javafx.beans.value.ObservableValue;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.Border;
@@ -56,7 +55,7 @@ import javafx.stage.StageStyle;
 
 public class SexComApp extends Application {
 
-    private ObservableList<User> userList;
+    private ObservableList<User> userList = FXCollections.observableArrayList();;
 
     private final LoadingCache<String, Image> IMAGE_CACHE = Caffeine.newBuilder()
             .expireAfterAccess(5, TimeUnit.MINUTES)
@@ -90,6 +89,7 @@ public class SexComApp extends Application {
         toolBar.getItems().add(search);
 
         userFound = new Hyperlink();
+        userFound.textProperty().bind(Bindings.size(userList).asString().concat(" users"));
 
         boardFound = new Hyperlink();
 
@@ -121,7 +121,6 @@ public class SexComApp extends Application {
         grid.setHorizontalCellSpacing(4);
         grid.setVerticalCellSpacing(4);
         grid.setCellFactory(param -> new UserGridCell());
-        userList = FXCollections.observableArrayList();
 
         random();
         grid.setItems(userList);
@@ -143,14 +142,16 @@ public class SexComApp extends Application {
         TableView<RequestInfo> table = new TableView<>();
         TableColumn<RequestInfo, LocalDateTime> startedCol = new TableColumn<>("started");
         TableColumn<RequestInfo, String> refCol = new TableColumn<>("ref");
-        table.getColumns().addAll(startedCol, refCol);
+        TableColumn<RequestInfo, String> exCol = new TableColumn<>("exception");
+        table.getColumns().addAll(startedCol, refCol, exCol);
         startedCol.setCellValueFactory(new PropertyValueFactory<>("started"));
         refCol.setCellValueFactory(new PropertyValueFactory<>("ref"));
+        exCol.setCellValueFactory(new PropertyValueFactory<>("exception"));
         table.setItems(NetLoader.getReqs());
         root.setCenter(table);
         Scene secondScene = new Scene(root, 800, 400);
         Stage secondStage = new Stage();
-        secondStage.setTitle("Your to-do.....");
+        secondStage.setTitle("okHttpClient requests");
         secondStage.setScene(secondScene);
         secondStage.initStyle(StageStyle.DECORATED);
         secondStage.initModality(Modality.NONE);
@@ -161,7 +162,6 @@ public class SexComApp extends Application {
 
     private void random() throws SQLException {
         Platform.runLater(() -> {
-            userFound.setText("0 users");
             boardFound.setText("0 boards");
         });
         updaters.forEach(Disposable::dispose);
@@ -209,7 +209,6 @@ public class SexComApp extends Application {
             Platform.runLater(() -> {
                 userList.clear();
                 userList.addAll(users);
-                userFound.setText(users.size() + " users");
             });
 
             BoardDao boardDao = (BoardDao) ModelSource.getBoardDAO();

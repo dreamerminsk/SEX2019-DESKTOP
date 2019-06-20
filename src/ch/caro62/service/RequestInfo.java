@@ -15,11 +15,16 @@ import okhttp3.Request;
 public class RequestInfo {
 
     private final LocalDateTime started;
-    private final String ref;    
+    private final String ref; 
+    private String exception;
     
     public RequestInfo(Request req) {
         this.started = LocalDateTime.now();
         this.ref = req.url().toString();
+    }
+    
+    public void exception(String exception) {
+        this.exception = exception;
     }
     
     public LocalDateTime getStarted() {
@@ -28,6 +33,10 @@ public class RequestInfo {
     
     public String getRef() {
         return ref;
+    }
+    
+    public String getException() {
+        return exception;
     }
     
 }
