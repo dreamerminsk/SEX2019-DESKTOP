@@ -1,5 +1,6 @@
 package ch.caro62.model;
 
+import ch.caro62.model.dao.impl.BoardDaoImpl;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
 
@@ -8,7 +9,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-@DatabaseTable(tableName = "sexBoards")
+@DatabaseTable(tableName = "sexBoards", daoClass = BoardDaoImpl.class)
 public class Board {
 
     @DatabaseField(id = true)

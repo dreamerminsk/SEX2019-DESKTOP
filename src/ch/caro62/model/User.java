@@ -1,9 +1,10 @@
 package ch.caro62.model;
 
-
 import ch.caro62.model.dao.impl.UserDaoImpl;
+import com.j256.ormlite.field.DataType;
 import com.j256.ormlite.field.DatabaseField;
 import com.j256.ormlite.table.DatabaseTable;
+import java.time.LocalDateTime;
 
 @DatabaseTable(tableName = "sexUsers", daoClass = UserDaoImpl.class)
 public class User {
@@ -35,8 +36,11 @@ public class User {
     @DatabaseField(columnName = "likes")
     private int likeCount;
 
-    public User() {
+    @DatabaseField(columnName = "last_checking", persisterClass = LocalDateTimeStore.class)
+    private LocalDateTime lastChecking;
 
+    public User() {
+        lastChecking = LocalDateTime.now();
     }
 
     public String getRef() {
@@ -113,5 +117,13 @@ public class User {
 
     public void setLikeCount(int likeCount) {
         this.likeCount = likeCount;
+    }
+
+    public LocalDateTime getlastChecking() {
+        return lastChecking;
+    }
+
+    public void setlastChecking(LocalDateTime lastChecking) {
+        this.lastChecking = lastChecking;
     }
 }

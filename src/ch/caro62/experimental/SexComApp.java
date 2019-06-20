@@ -1,14 +1,16 @@
 package ch.caro62.experimental;
 
+import ch.caro62.model.Board;
 import ch.caro62.model.ModelSource;
 import ch.caro62.model.User;
+import ch.caro62.model.dao.BoardDao;
 import ch.caro62.model.dao.UserDao;
 import ch.caro62.parser.UserParser;
-import ch.caro62.service.ImageLoader;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.CacheStats;
-import com.google.common.cache.LoadingCache;
+import ch.caro62.service.NetLoader;
+import ch.caro62.service.RequestInfo;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.LoadingCache;
+import com.github.benmanes.caffeine.cache.stats.CacheStats;
 import com.j256.ormlite.dao.Dao;
 import com.j256.ormlite.stmt.QueryBuilder;
 import com.j256.ormlite.stmt.Where;
@@ -36,34 +38,41 @@ import org.controlsfx.control.GridView;
 import org.jsoup.Jsoup;
 
 import java.sql.SQLException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
+import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.layout.Border;
+import javafx.stage.Modality;
+import javafx.stage.StageStyle;
 
 public class SexComApp extends Application {
 
     private ObservableList<User> userList;
 
-    private LoadingCache<String, Image> IMAGE_CACHE = CacheBuilder.newBuilder()
-            .concurrencyLevel(10)
+    private final LoadingCache<String, Image> IMAGE_CACHE = Caffeine.newBuilder()
             .expireAfterAccess(5, TimeUnit.MINUTES)
-            .maximumSize(320)
+            .maximumSize(128)
             .recordStats()
-            .softValues()
-            .weakKeys()
-            .build(new CacheLoader<String, Image>() {
-                @Override
-                public Image load(String key) throws Exception {
-                    System.out.println(key);
-                    return new Image(key, true);
-                }
+            .build((String key) -> {
+                return new Image(key, true);
             });
 
-    private List<Disposable> updaters = new ArrayList<>();
+    private final List<Disposable> updaters = new ArrayList<>();
 
     public static void main(String[] args) {
         launch(args);
     }
+    private Hyperlink userFound;
+    private Hyperlink boardFound;
 
     @Override
     public void start(Stage primaryStage) throws Exception {
@@ -73,43 +82,52 @@ public class SexComApp extends Application {
 
         TextField search = new TextField("");
         search.setPromptText("search.....");
-        search.textProperty().addListener((observable, oldValue, newValue) -> {
-            if (newValue.length() > 2) this.search(newValue);
+        search.textProperty().addListener((ObservableValue<? extends String> observable, String oldValue, String newValue) -> {
+            if (newValue.length() > 1) {
+                SexComApp.this.search(newValue);
+            }
         });
         toolBar.getItems().add(search);
 
-        Button button1 = new Button("search");
+        userFound = new Hyperlink();
+
+        boardFound = new Hyperlink();
+
+        toolBar.getItems().addAll(userFound, boardFound);
+
+        Button button1 = new Button("random");
+        button1.setOnAction((e) -> {
+            try {
+                random();
+            } catch (SQLException ex) {
+                Logger.getLogger(SexComApp.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        });
         toolBar.getItems().add(button1);
+        
+        Button button2 = new Button("okHttp");
+        button2.setOnAction((e) -> {
+            second(primaryStage);
+        });
+        toolBar.getItems().add(button2);
 
         BorderPane vBox = new BorderPane();
         vBox.setTop(toolBar);
 
         GridView<User> grid = new GridView<>();
 
-        grid.setCellHeight(280);
+        grid.setCellHeight(300);
         grid.setCellWidth(280);
         grid.setHorizontalCellSpacing(4);
         grid.setVerticalCellSpacing(4);
         grid.setCellFactory(param -> new UserGridCell());
         userList = FXCollections.observableArrayList();
-        UserDao userDao = (UserDao) ModelSource.getUserDAO();
-        Flowable<User> randoms = userDao.getRandom(512);
 
-        Disposable updater = randoms
-                .flatMap(user -> ImageLoader.getString(user.getAbsRef()))
-                .flatMap(html -> Flowable.just(Jsoup.parse(html)))
-                .flatMap(UserParser::parse)
-                .doOnError(System.out::println)
-                .doOnNext(u -> Platform.runLater(() -> userList.add(u)))
-                .subscribeOn(Schedulers.io())
-                .observeOn(Schedulers.single())
-                .retry()
-                .subscribe(this::saveUser);
-        updaters.add(updater);
+        random();
         grid.setItems(userList);
         vBox.setCenter(grid);
 
-        Scene scene = new Scene(vBox, 960, 600);
+        Scene scene = new Scene(vBox);
 
         primaryStage.setScene(scene);
 
@@ -118,6 +136,59 @@ public class SexComApp extends Application {
         primaryStage.setHeight(primaryScreenBounds.getHeight() / 3 * 2);
 
         primaryStage.show();
+    }
+
+    private void second(Stage primaryStage) {
+        BorderPane root = new BorderPane();
+        TableView<RequestInfo> table = new TableView<>();
+        TableColumn<RequestInfo, LocalDateTime> startedCol = new TableColumn<>("started");
+        TableColumn<RequestInfo, String> refCol = new TableColumn<>("ref");
+        table.getColumns().addAll(startedCol, refCol);
+        startedCol.setCellValueFactory(new PropertyValueFactory<>("started"));
+        refCol.setCellValueFactory(new PropertyValueFactory<>("ref"));
+        table.setItems(NetLoader.getReqs());
+        root.setCenter(table);
+        Scene secondScene = new Scene(root, 800, 400);
+        Stage secondStage = new Stage();
+        secondStage.setTitle("Your to-do.....");
+        secondStage.setScene(secondScene);
+        secondStage.initStyle(StageStyle.DECORATED);
+        secondStage.initModality(Modality.NONE);
+        secondStage.initOwner(primaryStage);
+        primaryStage.toFront();
+        secondStage.show();
+    }
+
+    private void random() throws SQLException {
+        Platform.runLater(() -> {
+            userFound.setText("0 users");
+            boardFound.setText("0 boards");
+        });
+        updaters.forEach(Disposable::dispose);
+        Platform.runLater(userList::clear);
+        UserDao userDao = (UserDao) ModelSource.getUserDAO();
+        Flowable<User> randoms = userDao.getRandomUnlim();
+
+        Disposable updater = randoms
+                .doOnNext(u -> Platform.runLater(() -> userList.add(u)))
+                .filter((User u) -> LocalDateTime.now()
+                .compareTo(
+                        u.getlastChecking().plusDays(1)) > 0)
+                .flatMap(user -> NetLoader.getString(user.getAbsRef()))
+                .flatMap(html -> Flowable.just(Jsoup.parse(html)))
+                .flatMap(UserParser::parse)
+                .filter((User u) -> u.getRef() != null)
+                .map((User u) -> {
+                    u.setlastChecking(LocalDateTime.now());
+                    return u;
+                })
+                .doOnError(System.out::println)
+                .doOnNext(this::updateUser)
+                .subscribeOn(Schedulers.io())
+                .observeOn(Schedulers.single())
+                .retry()
+                .subscribe(this::saveUser);
+        updaters.add(updater);
     }
 
     @Override
@@ -138,11 +209,31 @@ public class SexComApp extends Application {
             Platform.runLater(() -> {
                 userList.clear();
                 userList.addAll(users);
+                userFound.setText(users.size() + " users");
             });
+
+            BoardDao boardDao = (BoardDao) ModelSource.getBoardDAO();
+            QueryBuilder<Board, String> bquery = boardDao.queryBuilder();
+            Where<Board, String> bwhere = bquery.where();
+            bwhere.like("title", "%" + newValue + "%");
+            List<Board> boards = bquery.query();
+            Platform.runLater(() -> {
+                boardFound.setText(boards.size() + " boards");
+            });
+
             Disposable updater = Flowable.fromIterable(users)
-                    .flatMap(user -> ImageLoader.getString(user.getAbsRef()))
+                    .filter((User u) -> LocalDateTime.now()
+                    .compareTo(
+                            u.getlastChecking().plusDays(1)) > 0)
+                    .flatMap(user -> NetLoader.getString(user.getAbsRef()))
                     .flatMap(html -> Flowable.just(Jsoup.parse(html)))
                     .flatMap(UserParser::parse)
+                    .filter((User u) -> u.getRef() != null)
+                    .map((User u) -> {
+                        u.setlastChecking(LocalDateTime.now());
+                        return u;
+                    })
+                    .doOnNext(this::updateUser)
                     .doOnError(System.out::println)
                     .subscribeOn(Schedulers.io())
                     .observeOn(Schedulers.single())
@@ -153,48 +244,86 @@ public class SexComApp extends Application {
         }
     }
 
+    private void settings() throws SQLException {
+        UserDao userDao = (UserDao) ModelSource.getUserDAO();
+        Flowable
+                .fromIterable(userDao.queryForAll())
+                .filter(u -> u.getlastChecking() != null)
+                .doOnNext(u -> {
+                    Random r = new Random();
+                    u.setlastChecking(LocalDateTime.now().minusDays(r.nextInt(600)));
+                    userDao.update(u);
+                })
+                .subscribeOn(Schedulers.io())
+                .observeOn(Schedulers.single())
+                .subscribe();
+    }
+
     private void saveUser(User user) throws SQLException {
         System.out.println(user.getRef() + ", " + user.getName());
         Dao<User, String> userDao = ModelSource.getUserDAO();
         userDao.createOrUpdate(user);
     }
 
+    private void updateUser(User u) {
+        for (int i = 0; i < userList.size(); i++) {
+            if (userList.get(i).getRef().equalsIgnoreCase(u.getRef())) {
+                final int index = i;
+                Platform.runLater(() -> {
+                    userList.set(index, u);
+                });
+
+            }
+        }
+    }
+
     private class UserGridCell extends GridCell<User> {
 
-        private ImageView img;
-        private ProgressIndicator pi;
-        private TitledPane userPane;
-        private Hyperlink boards = new Hyperlink();
+        private final ImageView img;
+        private final ProgressIndicator pi;
+        private final TitledPane userPane;
+        private final Hyperlink boards = new Hyperlink();
         private final Hyperlink following = new Hyperlink();
+        private final Hyperlink pins = new Hyperlink();
+        private final Hyperlink repins = new Hyperlink();
 
         public UserGridCell() {
-            getStyleClass().add("color-grid-cell"); //$NON-NLS-1$
-
             userPane = new TitledPane();
             userPane.setCollapsible(false);
 
             img = new ImageView();
-
+            img.setStyle("-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.8), 10, 0, 0, 0);");
             img.setFitHeight(200);
             img.setFitWidth(200);
-            img.setPreserveRatio(false);
+            img.setPreserveRatio(true);
             img.setSmooth(true);
 
             pi = new ProgressIndicator();
             //pi.visibleProperty().bind(img.getImage().progressProperty().lessThan(1.0));
 
             StackPane box = new StackPane();
-            StackPane.setAlignment(boards, Pos.TOP_RIGHT);
-            box.getChildren().addAll(img, pi, boards);
 
-
-            VBox vbox = new VBox();
-            HBox hbox = new HBox(7);
+            VBox vbox = new VBox(2.5);
+            vbox.getChildren().add(box);
+            VBox statsPane = new VBox();
+            statsPane.setBorder(Border.EMPTY);
+            statsPane.setOpacity(0.95);
+            statsPane.setStyle("-fx-background-color: -fx-box-border, -fx-inner-border, -fx-body-color;\n"
+                    + "-fx-background-insets: 0, 1, 2;\n"
+                    + "-fx-background-radius: 5 5 0 0, 4 4 0 0, 3 3 0 0, 2 2 0 0;\n"
+                    + "-fx-padding: 0.166667em 0.833333em 0.25em 0.833333em; /* 2 10 3 10 */");
+            HBox hbox = new HBox(3);
             hbox.setAlignment(Pos.TOP_CENTER);
             hbox.getChildren().addAll(boards, following);
-            vbox.getChildren().add(hbox);
-            vbox.getChildren().add(box);
+            statsPane.getChildren().add(hbox);
+            HBox hbox2 = new HBox(3);
+            hbox2.setAlignment(Pos.TOP_CENTER);
+            hbox2.getChildren().addAll(pins, repins);
+            statsPane.getChildren().add(hbox2);
+            vbox.getChildren().add(statsPane);
 
+            //StackPane.setAlignment(statsPane, Pos.BOTTOM_CENTER);
+            box.getChildren().addAll(img, pi);
 
             userPane.setContent(vbox);
             setGraphic(userPane);
@@ -207,12 +336,15 @@ public class SexComApp extends Application {
             if (empty) {
                 setGraphic(null);
             } else {
-                img.setImage(IMAGE_CACHE.getUnchecked(item.getAvatar()));
+                img.setImage(IMAGE_CACHE.get(item.getAvatar()));
                 pi.visibleProperty().bind(img.getImage().progressProperty().lessThan(1.0));
                 pi.progressProperty().bind(img.getImage().progressProperty());
-                userPane.setText(item.getRef());
+                userPane.setText(item.getName() == null ? "/user/" + item.getRef()
+                        : item.getName() + " " + item.getlastChecking().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
                 boards.setText(item.getBoardCount() + " board(s)");
                 following.setText(item.getFollowerCount() + " following");
+                pins.setText(item.getPinCount() + " pin(s)");
+                repins.setText(item.getRepinCount() + " repin(s)");
                 setGraphic(userPane);
             }
         }

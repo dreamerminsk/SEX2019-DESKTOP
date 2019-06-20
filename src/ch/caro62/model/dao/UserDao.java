@@ -9,4 +9,6 @@ public interface UserDao extends Dao<User, String> {
     Flowable<User> getRandom();
 
     Flowable<User> getRandom(int count);
+    
+    Flowable<User> getRandomUnlim();
 }

@@ -3,11 +3,16 @@ package ch.caro62.kb;
 import ch.caro62.kb.model.Models;
 import ch.caro62.kb.parser.YearsParser;
 import io.reactivex.Flowable;
-import okhttp3.*;
 import org.jsoup.Jsoup;
 
 import java.io.File;
 import java.sql.SQLException;
+import okhttp3.Cache;
+import okhttp3.ConnectionPool;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+import okhttp3.ResponseBody;
 
 public class YearsCrawler {
 

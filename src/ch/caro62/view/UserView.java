@@ -5,7 +5,7 @@ import ch.caro62.model.ModelSource;
 import ch.caro62.model.User;
 import ch.caro62.parser.BoardListParser;
 import ch.caro62.parser.UserParser;
-import ch.caro62.service.ImageLoader;
+import ch.caro62.service.NetLoader;
 import com.j256.ormlite.dao.Dao;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
@@ -140,7 +140,7 @@ public class UserView extends JPanel {
     private Flowable<User> reload(User user) {
         return Flowable.just(user)
                 .map(User::getAbsRef)
-                .flatMap(ImageLoader::getString)
+                .flatMap(NetLoader::getString)
                 .map(Jsoup::parse)
                 .flatMap(UserParser::parse)
                 .doOnNext(this::saveUser)
@@ -170,7 +170,7 @@ public class UserView extends JPanel {
                                 itemPanel.add(imgLabel, BorderLayout.CENTER);
                                 itemPanel.setBorder(BorderFactory.createTitledBorder(board.getTitle()));
                                 itemsPanel.add(itemPanel);
-                                ImageLoader
+                                NetLoader
                                         .getBytes(board.getPins().get(0))
                                         .map(ImageIO::read)
                                         .map(Thumbnails::of)
@@ -212,7 +212,7 @@ public class UserView extends JPanel {
         return Flowable.just(currentUser.getAbsRef())
                 .subscribeOn(Schedulers.io())
                 .observeOn(Schedulers.single())
-                .flatMap(ImageLoader::getString)
+                .flatMap(NetLoader::getString)
                 .doOnNext((str) -> System.out.println(str.length()))
                 .map(Jsoup::parse)
                 .flatMap(BoardListParser::parse)
@@ -234,7 +234,7 @@ public class UserView extends JPanel {
         if (user.getAvatar() == null || user.getAvatar().length() < 1)
             imgRef = "https://www.sex.com/images/default_profile_picture.png";
         else imgRef = user.getAvatar();
-        return ImageLoader
+        return NetLoader
                 .getBytes(imgRef)
                 .map(ImageIO::read)
                 .map(Thumbnails::of)

@@ -4,12 +4,16 @@ import ch.caro62.model.User;
 import ch.caro62.model.dao.UserDao;
 import com.j256.ormlite.dao.BaseDaoImpl;
 import com.j256.ormlite.support.ConnectionSource;
+import io.reactivex.Emitter;
 import io.reactivex.Flowable;
+import io.reactivex.functions.BiFunction;
+import io.reactivex.functions.Function;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import org.reactivestreams.Publisher;
 
 public class UserDaoImpl extends BaseDaoImpl<User, String> implements UserDao {
 
@@ -28,6 +32,14 @@ public class UserDaoImpl extends BaseDaoImpl<User, String> implements UserDao {
         return Flowable.fromIterable(() -> {
             return getIterator(count);
         });
+    }
+
+    @Override
+    public Flowable<User> getRandomUnlim() {
+        return Flowable.generate(() -> 0L, (Long state, Emitter<Object> emitter) -> {
+            emitter.onNext(state);
+            return state + 1;
+        }).flatMap(i -> getRandom());
     }
 
     private Iterator<User> getIterator(long count) {

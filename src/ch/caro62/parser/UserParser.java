@@ -12,6 +12,7 @@ public class UserParser {
         User user = new User();
 
         Element userBox = doc.selectFirst("div.user_info_box");
+        if (userBox == null) return Flowable.just(user);
         for (Element ref : userBox.select("h1")) {
             user.setName(ref.text().trim());
         }
