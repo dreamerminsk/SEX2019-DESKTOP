@@ -16,11 +16,13 @@ import javafx.collections.ObservableList;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ButtonType;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
 
 public class NetLoader {
-    
-    private static final ObservableList<RequestInfo> REQS = FXCollections.observableArrayList(); 
-    
+
+    private static final ObservableList<RequestInfo> REQS = FXCollections.observableArrayList();
+
     private static final Random RANDOM = new Random(System.nanoTime());
 
     private static final RateLimiter LIMITER = RateLimiter.create(1000);
@@ -36,7 +38,7 @@ public class NetLoader {
         System.out.println("getBytes(\"" + ref + "\")");
         Request request = new Request.Builder()
                 .url(ref)
-                .build();        
+                .build();
         return Flowable.create(emitter -> {
             Response response = null;
             try {
@@ -57,17 +59,26 @@ public class NetLoader {
                 .url(ref)
                 .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.77 Safari/537.36")
                 .build();
-        final RequestInfo requestInfo = new RequestInfo(request);        
+        final RequestInfo requestInfo = new RequestInfo(request);
         return Flowable.create(emitter -> {
             Response response = null;
             try {
-                LIMITER.acquire(256 + RANDOM.nextInt(8000));
+                LIMITER.acquire(4000 + RANDOM.nextInt(8000));
                 Call call = OK.newCall(request);
                 call.timeout().timeout(0, TimeUnit.SECONDS);
                 response = call.execute();
-                emitter.onNext(response.body().string());
+                String html = response.body().string();
+                emitter.onNext(html);
                 response.body().close();
                 emitter.onComplete();
+                Document doc = Jsoup.parse(html);
+                final Response res = response;
+                doc.select("title").forEach(t -> {
+                    requestInfo.setTitle(
+                            res.message() + " "
+                            + html.length() + " "
+                            + t.text().trim());
+                });
                 REQS.add(requestInfo);
             } catch (IOException e) {
                 requestInfo.exception(e.getClass().getCanonicalName());
@@ -76,7 +87,7 @@ public class NetLoader {
             }
         }, BackpressureStrategy.LATEST);
     }
-    
+
     public static ObservableList<RequestInfo> getReqs() {
         return REQS;
     }

@@ -15,12 +15,10 @@ public class BoardModel extends DefaultTableModel {
         //this.addRow(new Object[]{"total", totalBoards, totalPins, totalFollowers});
     }
 
-    @Override
     public boolean isCellEditable(int row, int column) {
         return false;
     }
 
-    @Override
     public Class<?> getColumnClass(int columnIndex) {
         if (columnIndex == 0 || columnIndex == 1) {
             return String.class;

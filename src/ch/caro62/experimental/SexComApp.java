@@ -6,6 +6,7 @@ import ch.caro62.model.User;
 import ch.caro62.model.dao.BoardDao;
 import ch.caro62.model.dao.UserDao;
 import ch.caro62.parser.UserParser;
+import ch.caro62.service.ImageCache;
 import ch.caro62.service.NetLoader;
 import ch.caro62.service.RequestInfo;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -55,15 +56,7 @@ import javafx.stage.StageStyle;
 
 public class SexComApp extends Application {
 
-    private ObservableList<User> userList = FXCollections.observableArrayList();;
-
-    private final LoadingCache<String, Image> IMAGE_CACHE = Caffeine.newBuilder()
-            .expireAfterAccess(5, TimeUnit.MINUTES)
-            .maximumSize(128)
-            .recordStats()
-            .build((String key) -> {
-                return new Image(key, true);
-            });
+    private final ObservableList<User> userList = FXCollections.observableArrayList();
 
     private final List<Disposable> updaters = new ArrayList<>();
 
@@ -143,10 +136,12 @@ public class SexComApp extends Application {
         TableColumn<RequestInfo, LocalDateTime> startedCol = new TableColumn<>("started");
         TableColumn<RequestInfo, String> refCol = new TableColumn<>("ref");
         TableColumn<RequestInfo, String> exCol = new TableColumn<>("exception");
-        table.getColumns().addAll(startedCol, refCol, exCol);
+        TableColumn<RequestInfo, String> titleCol = new TableColumn<>("title");
+        table.getColumns().addAll(startedCol, refCol, exCol, titleCol);
         startedCol.setCellValueFactory(new PropertyValueFactory<>("started"));
         refCol.setCellValueFactory(new PropertyValueFactory<>("ref"));
         exCol.setCellValueFactory(new PropertyValueFactory<>("exception"));
+        titleCol.setCellValueFactory(new PropertyValueFactory<>("title"));
         table.setItems(NetLoader.getReqs());
         root.setCenter(table);
         Scene secondScene = new Scene(root, 800, 400);
@@ -193,7 +188,7 @@ public class SexComApp extends Application {
 
     @Override
     public void stop() throws Exception {
-        CacheStats stats = IMAGE_CACHE.stats();
+        CacheStats stats = ImageCache.getCache().stats();
         System.out.println(stats);
         super.stop();
     }
@@ -335,7 +330,7 @@ public class SexComApp extends Application {
             if (empty) {
                 setGraphic(null);
             } else {
-                img.setImage(IMAGE_CACHE.get(item.getAvatar()));
+                img.setImage(ImageCache.getCache().get(item.getAvatar()));
                 pi.visibleProperty().bind(img.getImage().progressProperty().lessThan(1.0));
                 pi.progressProperty().bind(img.getImage().progressProperty());
                 userPane.setText(item.getName() == null ? "/user/" + item.getRef()

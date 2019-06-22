@@ -17,6 +17,7 @@ public class RequestInfo {
     private final LocalDateTime started;
     private final String ref; 
     private String exception;
+    private String title;
     
     public RequestInfo(Request req) {
         this.started = LocalDateTime.now();
@@ -37,6 +38,14 @@ public class RequestInfo {
     
     public String getException() {
         return exception;
+    }
+    
+    public String getTitle() {
+        return title;
+    }
+    
+    public void setTitle(String title) {
+        this.title = title;
     }
     
 }

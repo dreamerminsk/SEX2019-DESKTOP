@@ -9,15 +9,19 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.concurrent.TimeUnit;
+import javafx.application.Platform;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
+import javafx.scene.control.ButtonType;
 
 public class ImageLoader {
 
     private static final RateLimiter LIMITER = RateLimiter.create(1000);
 
-    private static final Cache cache = new Cache(new File("cache"), 10 * 1024 * 1024);
+    private static final Cache CACHE = new Cache(new File("cache"), 32 * 1024 * 1024);
 
-    private static final OkHttpClient ok = new OkHttpClient.Builder()
-            .cache(cache)
+    private static final OkHttpClient OK = new OkHttpClient.Builder()
+            .cache(CACHE)
             .build();
 
     public static Flowable<InputStream> getBytes(String ref) {
@@ -27,13 +31,15 @@ public class ImageLoader {
                 .url(ref)
                 .build();
         return Flowable.create(emitter -> {
+            Response response = null;
             try {
-                Response response = ok.newCall(request).execute();
+                response = OK.newCall(request).execute();
                 emitter.onNext(response.body().byteStream());
                 response.body().close();
                 emitter.onComplete();
             } catch (IOException e) {
-                e.printStackTrace();
+                Alert alert = new Alert(AlertType.ERROR, ref + "\r\n" + response.message(), ButtonType.OK);
+                alert.showAndWait();
                 emitter.onError(e);
             }
         }, BackpressureStrategy.LATEST);
@@ -42,18 +48,24 @@ public class ImageLoader {
     public static Flowable<String> getString(String ref) {
         Request request = new Request.Builder()
                 .url(ref)
+                .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.77 Safari/537.36")
                 .build();
         return Flowable.create(emitter -> {
+            Response response = null;
             try {
                 LIMITER.acquire(4257);
-                Call call = ok.newCall(request);
-                call.timeout().timeout(64, TimeUnit.SECONDS);
-                Response response = call.execute();
+                Call call = OK.newCall(request);
+                call.timeout().timeout(0, TimeUnit.SECONDS);
+                response = call.execute();
                 emitter.onNext(response.body().string());
                 response.body().close();
                 emitter.onComplete();
             } catch (IOException e) {
-                e.printStackTrace();
+                Platform.runLater(() -> {
+                    Alert alert = new Alert(AlertType.ERROR, ref + "\r\n" + e.getMessage(), ButtonType.OK);
+                    alert.showAndWait();
+                });
+
                 emitter.onError(e);
             }
         }, BackpressureStrategy.LATEST);
