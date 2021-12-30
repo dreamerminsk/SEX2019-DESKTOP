@@ -6,51 +6,48 @@ import com.j256.ormlite.dao.BaseDaoImpl;
 import com.j256.ormlite.support.ConnectionSource;
 import io.reactivex.Emitter;
 import io.reactivex.Flowable;
-import io.reactivex.functions.BiFunction;
-import io.reactivex.functions.Function;
-
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import org.reactivestreams.Publisher;
 
 public class UserDaoImpl extends BaseDaoImpl<User, String> implements UserDao {
 
-    public UserDaoImpl(ConnectionSource connectionSource)
-            throws SQLException {
-        super(connectionSource, User.class);
-    }
+  public UserDaoImpl(ConnectionSource connectionSource) throws SQLException {
+    super(connectionSource, User.class);
+  }
 
-    @Override
-    public Flowable<User> getRandom() {
-        return Flowable.fromCallable(() -> queryBuilder().orderByRaw("RANDOM()").queryForFirst());
-    }
+  @Override
+  public Flowable<User> getRandom() {
+    return Flowable.fromCallable(() -> queryBuilder().orderByRaw("RANDOM()").queryForFirst());
+  }
 
-    @Override
-    public Flowable<User> getRandom(int count) {
-        return Flowable.fromIterable(() -> {
-            return getIterator(count);
+  @Override
+  public Flowable<User> getRandom(int count) {
+    return Flowable.fromIterable(
+        () -> {
+          return getIterator(count);
         });
-    }
+  }
 
-    @Override
-    public Flowable<User> getRandomUnlim() {
-        return Flowable.generate(() -> 0L, (Long state, Emitter<Object> emitter) -> {
-            emitter.onNext(state);
-            return state + 1;
-        }).flatMap(i -> getRandom());
-    }
+  @Override
+  public Flowable<User> getRandomUnlim() {
+    return Flowable.generate(
+            () -> 0L,
+            (Long state, Emitter<Object> emitter) -> {
+              emitter.onNext(state);
+              return state + 1;
+            })
+        .flatMap(i -> getRandom());
+  }
 
-    private Iterator<User> getIterator(long count) {
-        List<User> users = new ArrayList<>();
-        try {
-            users.addAll(queryBuilder()
-                    .orderByRaw("RANDOM()")
-                    .limit(count).query());
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return users.iterator();
+  private Iterator<User> getIterator(long count) {
+    List<User> users = new ArrayList<>();
+    try {
+      users.addAll(queryBuilder().orderByRaw("RANDOM()").limit(count).query());
+    } catch (SQLException e) {
+      e.printStackTrace();
     }
+    return users.iterator();
+  }
 }
