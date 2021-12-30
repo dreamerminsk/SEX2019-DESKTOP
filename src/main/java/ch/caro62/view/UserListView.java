@@ -1,6 +1,5 @@
 package ch.caro62.view;
 
-import ch.caro62.experimental.SexComApp;
 import ch.caro62.model.User;
 import ch.caro62.service.ImageCache;
 import java.time.format.DateTimeFormatter;
